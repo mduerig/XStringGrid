@@ -54,6 +54,9 @@
               29.07.03md  v2.6 New cell editor CECheckbox
               29.07.03md  v2.6 Workaround for CECheckbox weirdness
               29.07.03md  v2.6 Release 2.6
+              30.07.03md  v2.7 Fixed bug with multiline display of editors
+              18.08.03md  v2.7 New property AutoSizeDropDown for ComboCellEditor
+                               Thanks to Don Donati
 ------------------------------------------------------------------------------
 }
 {$I VERSIONS.INC}
@@ -197,14 +200,16 @@ type
     property OnElipsisClick: TNotifyEvent read getOnElipsisClick write setOnElipsisClick;
     property ElipsisCaption: string read getElipsisCaption write setElipsisCaption;
   end;
-
+{ TODO : Test changes marked with DAD }
   TComboInplace = class(TCustomComboBox)
   private
     FCellEditor: TCellEditor;
+    FAutoSizeDropDown: boolean; //DAD
   protected
 {$IFDEF REQUESTALIGN_FIXED}
     procedure RequestAlign; override;
 {$ENDIF}
+    procedure DropDown; override; //DAD
     procedure CreateParams(var Params: TCreateParams); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
@@ -213,17 +218,21 @@ type
     procedure CreateWnd; override;
   public
     constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;
+    property AutoSizeDropDown: boolean read FAutoSizeDropDown write FAutoSizeDropDown; //DAD
   end;
 
   TComboCellEditor = class(TMetaCellEditor)
   private
     FStyle: TComboBoxStyle;
     FItems: TStrings;
+    FAutoSizeDropDown: boolean; //DAD
   protected
     function InitEditor(AOwner: TComponent): TWinControl; override;
     procedure SetItems(Value: TStrings);
     function GetStyle: TComboBoxStyle; virtual;
     procedure SetStyle(Value: TComboBoxStyle); virtual;
+    function GetAutoSizeDropDown: boolean; //DAD
+    procedure SetAutoSizeDropDown(Value: boolean); //DAD
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -233,6 +242,7 @@ type
     property DefaultText;
     property Style: TComboBoxStyle read GetStyle write SetStyle default csDropDown;
     property Items: TStrings read FItems write SetItems;
+    property AutoSizeDropDown: boolean read GetAutoSizeDropDown write SetAutoSizeDropDown; //DAD
   end;
 
   TMaskEditInplace = class(TCustomMaskEdit)
@@ -1167,7 +1177,7 @@ end;
 procedure TEditInplace.CreateParams(var Params: TCreateParams);
 begin
   inherited CreateParams(Params);
-  Params.Style := Params.Style or ES_MULTILINE;
+  Params.Style := (Params.Style or  ES_MULTILINE) and not ES_AUTOHSCROLL;
 end;
 
 procedure TEditInplace.KeyDown(var Key: Word; Shift: TShiftState);
@@ -1480,6 +1490,23 @@ begin
   TabStop := False;
 end;
 
+procedure TComboInplace.DropDown; //DAD
+var
+  Index, MaxWidth, TxtWidth: integer;
+begin
+  If FAutoSizeDropDown then begin
+    MaxWidth := Width;
+    for Index := 0 to Items.Count - 1 do begin
+      TxtWidth := Canvas.TextWidth(Items[Index]) + 20;
+      If TxtWidth > MaxWidth then
+        MaxWidth := TxtWidth;
+    end;
+    If MaxWidth <> Width then
+      SendMessage(Handle, cb_SetDroppedWidth, MaxWidth, 0);
+  end;
+  inherited DropDown;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TComboCellEditor
 //
@@ -1532,6 +1559,7 @@ function TComboCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 begin
   result := TComboInplace.Create(AOwner, self);
   TComboInplace(result).Style := FStyle;
+  TComboInplace(result).AutoSizeDropDown := FAutoSizeDropDown; //DAD
 end;
 
 procedure TComboCellEditor.SetItems(Value: TStrings);
@@ -1555,6 +1583,22 @@ begin
     FStyle := Value
   else
     TComboInplace(FEditor).Style := Value;
+end;
+
+function TComboCellEditor.GetAutoSizeDropDown: boolean; //DAD
+begin
+  if FEditor = nil then
+    result := FAutoSizeDropDown
+  else
+    result := TComboInplace(FEditor).AutoSizeDropDown;
+end;
+
+procedure TComboCellEditor.SetAutoSizeDropDown(Value: boolean); //DAD
+begin
+  if FEditor = nil then
+    FAutoSizeDropDown := Value
+  else
+    TComboInplace(FEditor).AutoSizeDropDown := Value;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
