@@ -20,7 +20,7 @@ unit CEFormRegister;
 interface
 uses
   classes, Exptintf,
-{$IFNDEF D6UP}
+{$IFNDEF DSGNINTF_GONE}
   DsgnIntf;
 {$ELSE}
   DesignEditors, DesignIntf;
