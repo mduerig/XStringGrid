@@ -16,7 +16,7 @@
 
 {$I VERSIONS.INC}
 unit CECheckbox;
-{todo -ctest : Test this compo with other compilers (D6 ok)}
+{todo -ctest : Test this compo with other compilers (D6, BCB6 ok)}
 
 interface
 uses

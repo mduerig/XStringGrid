@@ -936,7 +936,7 @@ end;
 // this 'bug' causes the button not to work as expected.
 // Therefore I'm 'fixing' this for the checkbox only, so everything hopefully works
 // as expected.
-{ TODO : Test (D6 ok) }
+{ TODO : Test (D6, BCB6 ok) }
 procedure TXStringGrid.WMCommand(var Message: TWMCommand);
 var
   Control: TWinControl;
