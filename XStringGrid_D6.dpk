@@ -42,6 +42,7 @@ contains
   CEForm in 'CEForm.pas',
   CEFormRegister in 'CEFormRegister.pas',
   CEButton in 'CEButton.pas',
-  colorcombo in 'colorcombo.pas';
+  colorcombo in 'colorcombo.pas',
+  CECheckbox in 'CECheckbox.pas';
 
 end.

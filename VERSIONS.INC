@@ -1,6 +1,7 @@
 {$IFDEF VER140}
   {$IFDEF BCB}
-    This is still to be checked
+    {$DEFINE BCB6}
+    {$DEFINE BCB6UP}
   {$ELSE}
     {$DEFINE D6}
     {$DEFINE D6UP}
@@ -46,6 +47,9 @@
   {$DEFINE D3UP}
 {$ENDIF}
 
+{$IFDEF BCB6UP}
+  {$DEFINE BCB5UP}
+{$ENDIF}
 {$IFDEF BCB5UP}
   {$DEFINE BCB4UP}
 {$ENDIF}
@@ -61,6 +65,12 @@
 {$IFDEF BCB3UP}
   {$DEFINE HAS_REINTRODUCE}
   {$DEFINE REQUESTALIGN_FIXED}
+{$ENDIF}
+
+{$IFDEF BCB6UP}
+  {$DEFINE DSGNINTF_GONE}
+  {$DEFINE IFORMDESIGNER_MOVED}
+  {$DEFINE EDITPROPERTY_CHANGED}
 {$ENDIF}
 
 {$IFDEF D6UP}
@@ -83,7 +93,10 @@
 {$ENDIF}{$ENDIF}
 
 {$IFDEF BCB4}
-  Not tested with BCB4 Compiler. Send me a
-  note if you succeed: mduerig@eye.ch
+  According to a mail from a user the component works
+  with BCB4. Just create a new package and install all
+  .pas-Files. (And comment this note out of course) 
+
+  I don't have BCB4 so can't test it.
 {$ENDIF}
 
