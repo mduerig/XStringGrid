@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs, CEForm,
-  ComCtrls, StdCtrls, ToolWin;
+  ComCtrls, StdCtrls, ToolWin, ImgList;
 
 type
   TCustomCellEditor = class(TFormInplace)

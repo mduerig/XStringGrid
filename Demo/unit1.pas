@@ -7,7 +7,7 @@
   ----------------------------------------------------------------------------
     (C) 1997  M. Dürig
               CH-4056 Basel
-              mduerig@eye.ch / www.eye.ch/~mduerig
+              mduerig@eye.ch / http://www.eye.ch/~mduerig
   ----------------------------------------------------------------------------
     History:  13.10.97md  v1.0 Release v1.0
               12.08.99md  v2.0 Release v2.0
@@ -20,7 +20,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  XStringGrid, Grids, StdCtrls, Menus, CEForm, CECheckList, CEButton;
+  XStringGrid, Grids, StdCtrls, Menus, CEForm, CECheckList, CEButton,
+  ExtCtrls, Buttons, CECheckbox;
 
 type
   TDemoForm = class(TForm)
@@ -45,6 +46,7 @@ type
     cbSortWholeRows: TCheckBox;
     cbSortDesc: TCheckBox;
     Label1: TLabel;
+    CheckBoxCellEditor1: TCheckBoxCellEditor;
     procedure FormCreate(Sender: TObject);
     procedure miLeftAlignClick(Sender: TObject);
     procedure miRightAlignClick(Sender: TObject);
@@ -63,6 +65,9 @@ type
     procedure xgMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure EditCellEditor1ElipsisClick(Sender: TObject);
+    procedure CheckBoxCellEditor1SetState(Sender: TCheckBoxCellEditor);
+    procedure CheckBoxCellEditor1SetText(Sender: TCheckBoxCellEditor;
+      var Value: String);
   private
     CurrentRow: Longint;
     CurrentCol: Longint;
@@ -244,6 +249,24 @@ begin
     if InputQuery('XString Grid Demo', 'More: ', s) then
       EditCellEditor1.Editor.Text := s;
   end;
+end;
+
+procedure TDemoForm.CheckBoxCellEditor1SetState(
+  Sender: TCheckBoxCellEditor);
+begin
+  if xg.Cells[xg.Col, xg.Row] = 'X' then
+    Sender.State := cbChecked
+  else
+    Sender.State := cbUnchecked;
+end;
+
+procedure TDemoForm.CheckBoxCellEditor1SetText(Sender: TCheckBoxCellEditor;
+  var Value: String);
+begin
+  if Sender.State = cbChecked then
+    Value := 'X'
+  else
+    Value := '';
 end;
 
 end.
