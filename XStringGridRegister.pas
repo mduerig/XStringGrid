@@ -12,6 +12,7 @@
   ----------------------------------------------------------------------------
     History:  11.03.97md  v1.0 Release v1.0
               14.09.97md  v1.1 Added Component Editor
+              07.08.98md  v1.1 Little patch for D4
   ----------------------------------------------------------------------------
 }
 
@@ -24,6 +25,10 @@ uses Windows, Messages, SysUtils, Classes,
   colorcombo, Grids, DBGrids;
 
 type
+{$IFDEF VER120}
+  TFormDesigner = IFormDesigner;
+{$ENDIF}
+
   TXStringColumnsProperty = class(TClassProperty)
     procedure Edit; override;
     function GetAttributes: TPropertyAttributes; override;

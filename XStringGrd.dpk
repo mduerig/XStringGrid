@@ -1,0 +1,45 @@
+package XStringGrd;
+
+{$R *.RES}
+{$R 'XStringGridRegister.dcr'}
+{$ALIGN ON}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $00400000}
+{$DESCRIPTION 'Extended String Grid Components'}
+{$DESIGNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+{$IFDEF VER120}
+  vcl40,
+  vcldb40;
+{$ELSE}
+  vcl30,
+  vcldb30;
+{$ENDIF}
+
+contains
+  XStringGridRegister,
+  colorcombo,
+  XStringGrid,
+  about;
+
+end.
