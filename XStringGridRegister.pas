@@ -17,6 +17,7 @@
               03.10.99md  v2.0 Components go to separate Palette
               26.11.2k md v2.1 Included new features from Marcus Wirth
               29.07.03md  v2.6 Added PropertyInheritance property
+              04.12.03md  v2.6 Fixed bug which caused column withs to get increase
   ----------------------------------------------------------------------------
 }
 
@@ -425,8 +426,10 @@ end;
 procedure TDlgProps.LBColumnsClick(Sender: TObject);
 begin
   EditHeader.text := ColCaption;
+  TBWidth.OnChange := nil;
   TBWidth.Max := trunc(1.02 * (ColWidth)) + 100;
   TBWidth.position := ColWidth;
+  TBWidth.OnChange := TBWidthChange;
   LabelWidth.Caption := IntToStr(ColWidth);
   case Aligmnent of
     taLeftJustify:   CBAlignment.ItemIndex := 0;
