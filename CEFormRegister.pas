@@ -20,6 +20,8 @@ unit CEFormRegister;
 interface
 uses
   classes, Exptintf,
+  { TODO : Exptintf is deprected in D7. Use ToolsAPI instead.
+           If someone wants to look into this... go ahead!}
 {$IFNDEF DSGNINTF_GONE}
   DsgnIntf;
 {$ELSE}

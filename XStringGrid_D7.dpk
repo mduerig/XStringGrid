@@ -1,0 +1,47 @@
+package XStringGrid_D7;
+
+{$R *.res}
+{$R 'XStringGridRegister.dcr'}
+{$R 'colorcombo.dcr'}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS ON}
+{$RANGECHECKS ON}
+{$REFERENCEINFO OFF}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DESCRIPTION 'Extended String Grid Components'}
+{$DESIGNONLY}
+{$IMPLICITBUILD ON}
+
+requires
+  vcl,
+  vclx,
+  designide;
+
+contains
+  XStringGridRegister in 'XStringGridRegister.pas',
+  XStringGrid in 'XStringGrid.pas',
+  about in 'about.pas',
+  CECheckList in 'CECheckList.pas',
+  CEForm in 'CEForm.pas',
+  CEFormRegister in 'CEFormRegister.pas',
+  CEButton in 'CEButton.pas',
+  colorcombo in 'colorcombo.pas',
+  CECheckbox in 'CECheckbox.pas';
+
+end.
