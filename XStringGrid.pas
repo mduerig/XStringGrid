@@ -980,7 +980,7 @@ end;
 // this 'bug' causes the button not to work as expected.
 // Therefore I'm 'fixing' this for the checkbox only, so everything hopefully works
 // as expected.
-{ TODO : This hack is only tested with D6, BCB6 so far }
+{ TODO : This hack is only tested with D6, D7, BCB6 so far }
 { TODO : Fixme sometimes}
 procedure TXStringGrid.WMCommand(var Message: TWMCommand);
 var

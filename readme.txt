@@ -1,4 +1,4 @@
-XStringrid Version 2.5
+XStringrid Version 2.6
 ======================
 
 OVERVIEW
@@ -8,9 +8,10 @@ offers a lot more flexibility. It's possible to apply different
 colors and fonts to each column and it's header and align the
 content of the cells. In addition it offers different inplace
 editors which can be assigned to columns to edit their cells.
-So far edit, combo, maskedit, updown, checklist, button and
-form inplace editors are implemented. TXStringgrid also 
+So far edit, combo, maskedit, updown, checklist, button checkbox
+and form inplace editors are implemented. TXStringgrid also 
 implements a flexible sort mechanism.
+See the demo project to get started.
 
 INSTALLATION
 ------------
@@ -19,7 +20,10 @@ Use the appropriate package file for installation:
   - Delphi4: XStringGrid_D4.dpk
   - Delphi5: XStringGrid_D5.dpk
   - Delphi6: XStringGrid_D6.dpk
+  - Delphi7: XStringGrid_D7.dpk
   - BCB3: XStringGrid_BC3.bpk
+  - BCB5: XStringGrid_BC5.bpk
+  - BCB6: XStringGrid_BC6.bpk
 
 If you succeed to install the component on any other version of 
 Delphi or CBuilder please send me a note and the patches required
@@ -54,6 +58,6 @@ FROM IT, INCLUDING SUCH FROM NEGLIGENCE, STRICT LIABILITY, OR
 BREACH OF WARRANTY OR CONTRACT, EVEN AFTER NOTICE OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
-2001-08-14
+2003-06-29
 Michael Dürig
 mduerig@eye.ch
