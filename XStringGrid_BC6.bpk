@@ -12,15 +12,8 @@
     <DEFFILE value=""/>
     <RESDEPEN value="$(RESFILES) XStringGridRegister.dfm"/>
     <LIBFILES value=""/>
-    <LIBRARIES value="bcb97axserver.lib indy.lib dbxcds.lib dclocx.lib soaprtl.lib nmfast.lib 
-      dbexpress.lib inetdbxpress.lib inetdbbde.lib dsnapcon.lib dsnapcrba.lib 
-      visualdbclx.lib teeqr.lib dss.lib tee.lib teedb.lib teeui.lib qrpt.lib 
-      bdecds.lib cds.lib ibxpress.lib vcldbx.lib bdertl.lib adortl.lib"/>
-    <SPARELIBS value="rtl.lib vcldb.lib adortl.lib bdertl.lib vcldbx.lib ibxpress.lib cds.lib 
-      bdecds.lib qrpt.lib teeui.lib teedb.lib tee.lib dss.lib teeqr.lib 
-      visualdbclx.lib dsnapcrba.lib dsnapcon.lib bcbsmp.lib inetdbbde.lib 
-      inetdbxpress.lib dbexpress.lib nmfast.lib bcbie.lib soaprtl.lib dclocx.lib 
-      dbxcds.lib indy.lib bcb97axserver.lib"/>
+    <LIBRARIES value=""/>
+    <SPARELIBS value="rtl.lib"/>
     <PACKAGES value="rtl.bpi designide.bpi vcl.bpi vcldb.bpi dbrtl.bpi vclx.bpi bcbsmp.bpi 
       bcbie.bpi"/>
     <PATHCPP value=".;"/>
@@ -33,14 +26,14 @@
     <USERDEFINES value="_DEBUG"/>
     <SYSDEFINES value="_RTLDLL;NO_STRICT;USEPACKAGES"/>
     <MAINSOURCE value="XStringGrid_BC6.cpp"/>
-    <INCLUDEPATH value="E:\CppBuilder6\Projects;$(BCB)\include;$(BCB)\include\vcl"/>
-    <LIBPATH value="E:\CppBuilder6\Projects;$(BCB)\lib\obj;$(BCB)\lib"/>
+    <INCLUDEPATH value="$(BCB)\Projects;$(BCB)\include;$(BCB)\include\vcl"/>
+    <LIBPATH value="$(BCB)\Projects;$(BCB)\lib\obj;$(BCB)\lib"/>
     <WARNINGS value="-w-par"/>
     <OTHERFILES value=""/>
   </MACROS>
   <OPTIONS>
-    <IDLCFLAGS value="-IE:\CppBuilder6\Projects -I$(BCB)\include -I$(BCB)\include\vcl 
-      -src_suffix cpp -D_DEBUG -boa"/>
+    <IDLCFLAGS value="-I$(BCB)\Projects -I$(BCB)\include -I$(BCB)\include\vcl -src_suffix cpp 
+      -D_DEBUG -boa"/>
     <CFLAG1 value="-Od -H=$(BCB)\lib\vcl60.csm -Hc -Vx -Ve -X- -r- -a8 -b- -k -y -v -vi- -c 
       -tWM"/>
     <PFLAGS value="-$YD -$W -$O- -$A8 -v -JPHNE -M -LUDesignIde"/>
@@ -59,7 +52,7 @@
       <FILE FILENAME="XStringGrid_BC6.res" FORMNAME="" UNITNAME="XStringGrid_BC6.res" CONTAINERID="ResTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="XStringGrid_BC6.cpp" FORMNAME="" UNITNAME="XStringGrid_BC6" CONTAINERID="CCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="rtl.bpi" FORMNAME="" UNITNAME="rtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="E:\CppBuilder6\Lib\designide.bpi" FORMNAME="" UNITNAME="designide" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
+      <FILE FILENAME="e:\cppbuilder6\Lib\designide.bpi" FORMNAME="" UNITNAME="designide" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="colorcombo.pas" FORMNAME="" UNITNAME="colorcombo" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="colorcombo.dcr" FORMNAME="" UNITNAME="" CONTAINERID="DcrTool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="vcl.bpi" FORMNAME="" UNITNAME="vcl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
