@@ -2,7 +2,9 @@ program demo;
 
 uses
   Forms,
-  unit1 in 'unit1.pas' {DemoForm};
+  unit1 in 'unit1.pas' {DemoForm},
+  Unit2 in 'Unit2.pas' {CustomCellEditor},
+  Unit3 in 'Unit3.pas' {DateCellEditor};
 
 {$R *.RES}
 

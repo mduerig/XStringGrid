@@ -1,7 +1,8 @@
-package XStringGrd;
+package XStringGrid_D4;
 
 {$R *.RES}
 {$R 'XStringGridRegister.dcr'}
+{$R 'colorcombo.dcr'}
 {$ALIGN ON}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -28,18 +29,17 @@ package XStringGrd;
 {$IMPLICITBUILD ON}
 
 requires
-{$IFDEF VER120}
   vcl40,
-  vcldb40;
-{$ELSE}
-  vcl30,
-  vcldb30;
-{$ENDIF}
+  vcldb40,
+  vclx40;
 
 contains
-  XStringGridRegister,
-  colorcombo,
-  XStringGrid,
-  about;
+  XStringGridRegister in 'XStringGridRegister.pas',
+  XStringGrid in 'XStringGrid.pas',
+  about in 'about.pas',
+  CECheckList in 'CECheckList.pas',
+  CEForm in 'CEForm.pas',
+  CEFormRegister in 'CEFormRegister.pas',
+  CEButton in 'CEButton.pas';
 
 end.

@@ -13,6 +13,8 @@
     History:  11.03.97md  v1.0 Release v1.0
               14.09.97md  v1.1 Added Component Editor
               07.08.98md  v1.1 Little patch for D4
+              12.08.99md  v2.0 Release v2.0
+              03.10.99md  v2.0 Components go to separate Palette
   ----------------------------------------------------------------------------
 }
 
@@ -25,9 +27,14 @@ uses Windows, Messages, SysUtils, Classes,
   colorcombo, Grids, DBGrids;
 
 type
-{$IFDEF VER120}
-  TFormDesigner = IFormDesigner;
+{$IFDEF VER100}  // D3
+  IFormDesigner = TFormDesigner;
 {$ENDIF}
+
+{$IFDEF VER110}  // BCB3
+  IFormDesigner = TFormDesigner;
+{$ENDIF}
+
 
   TXStringColumnsProperty = class(TClassProperty)
     procedure Edit; override;
@@ -80,7 +87,7 @@ type
     procedure CBAlignmentChange(Sender: TObject);
   private
     FColumns: TXStringColumns;
-    FDesigner: TFormDesigner;
+    FDesigner: IFormDesigner;
     procedure AddEditorClass(const S: string);
     procedure SetColumns(Value: TXStringColumns);
     function GetColCaption: TCaption;
@@ -108,12 +115,12 @@ type
     property ColHdrFont: TFont read GetColHdrFont write SetColHdrFont;
     property CellEditor: TCellEditor read GetCellEditor write SetCellEditor;
   public
-    constructor Create(AOwner: TComponent; Designer: TFormDesigner);
+    constructor Create(AOwner: TComponent; Designer: IFormDesigner);
     property Columns: TXStringColumns read FColumns write SetColumns;
   end;
 
 procedure Register;
-procedure EditColumns(Cols: TXStringColumns; Designer: TFormDesigner);
+procedure EditColumns(Cols: TXStringColumns; Designer: IFormDesigner);
 
 implementation
 
@@ -127,13 +134,13 @@ uses TypInfo, about;
 
 procedure Register;
 begin
-  RegisterComponents('Additional', [TXStringgrid, TComboCellEditor,
+  RegisterComponents('XStringGrid', [TXStringgrid, TComboCellEditor,
     TEditCellEditor, TMaskEditCellEditor, TUpDownCellEditor]);
   RegisterPropertyEditor(TypeInfo(TXStringColumns), TXStringGrid, '', TXStringColumnsProperty);
   RegisterComponentEditor(TXStringGrid, TXStringColumnsEditor);
 end;
 
-procedure EditColumns(Cols: TXStringColumns; Designer: TFormDesigner);
+procedure EditColumns(Cols: TXStringColumns; Designer: IFormDesigner);
 begin
   with TDlgProps.Create(Application, Designer) do
     try
@@ -197,7 +204,7 @@ end;
 // private TDlgProps
 //
 
-constructor TDlgProps.Create(AOwner: TComponent; Designer: TFormDesigner);
+constructor TDlgProps.Create(AOwner: TComponent; Designer: IFormDesigner);
 begin
   FDesigner := Designer;
   inherited Create(AOwner);
@@ -268,7 +275,7 @@ begin
 end;
 
 procedure TDlgProps.SetColWidth(Value: integer);
-begin            
+begin
   with LBColumns do
     if ItemIndex >= 0 then
       TXStringColumnItem(items.objects[ItemIndex]).Width := Value;

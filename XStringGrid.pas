@@ -1,7 +1,7 @@
 {
   ------------------------------------------------------------------------------
     Filename: XStringGrid.pas
-    Version:  v1.2
+    Version:  v2.0
     Authors:  Michael Dürig (md)
     Purpose:  XStringgrid is an extended version of the stringgrid which offers
               a lot more flexibility. It's possible to apply different colours
@@ -10,14 +10,8 @@
               which can be assigned to columns to edit their cells. So far
               there are edit, combo, maskedit and spincontrol inplace editors
               implemented.
-    Remark:   There's a bug in Borland's TStringGrid with at least some
-              versions of Delphi 2. When moving columns only the cells of
-              the fixed rows get moved, the other cells stay at their places.
-              When using TXStringGrid it seems like only the layout of the
-              cells without the content gets moved.
-              This bug is fixed in Delphi 3.
   ------------------------------------------------------------------------------
-    (C) 1998  M. Dürig
+    (C) 1999  M. Dürig
               CH-4056 Basel
               mduerig@eye.ch / www.eye.ch/~mduerig
   ------------------------------------------------------------------------------
@@ -26,10 +20,22 @@
               29.11.97md  v1.1 TEditCelleditor text selected on entry now
               05.12.97md  v1.1 Fixed Cant focus invisible control bug
               12.12.97md  v1.2 Provides goAlwaysShowEditor now
-              07.04.98md  v1.2 Correted problem with goTabs
-  ------------------------------------------------------------------------------
+              07.04.98md  v1.2 Corrected problem with goTabs
+              22.06.99md  v1.2 Made FEditor of TMetaCellEditor protected
+              22.06.99md  v1.2 Made StartEdit, EndEdit of TCellEditor public
+              22.06.99md  v1.2 Added TXStringGrid.HandleKey
+              10.07.99md  v1.2 Fixed AllowEndedit initialisation probl.
+              22.07.99md  v1.2 Fixed TXStringGrid.MouseDown bug. Thanx to Jacob!
+              03.08.99md  v1.2 Fixed RecreateWnd bug.
+              12.08.99md  v2.0 Release v2.0
+              03.10.99md  v2.0 TCellEditor.init for dynamic CellEditor creation
+              17.10.99md  v2.0 Fixed problem with TUpDownCellEditor properties
+              17.10.99md  v2.0 Fixed DefaultText bug in TMaskEditCellEditor
+              22.10.99md  v2.0 Fixed cell clearing problem with goTabs
+              22.10.99md  v2.0 OnSelectCell triggers now when clicking a cell
+              23.12.99md  v2.0 Fixed ugly bug in CompareProc and SwapProc
+------------------------------------------------------------------------------
 }
-
 unit XStringGrid;
 
 interface
@@ -56,17 +62,20 @@ type
   protected
     procedure Attatch(AGrid: TXStringGrid); virtual;
     procedure Detach; virtual;
-    procedure StartEdit; virtual; abstract;
-    procedure EndEdit; virtual; abstract;
+    procedure GridWndDestroying; virtual;
     property DefaultText: String read FDefaultText write FDefaultText;
   public
     destructor destroy; override;
+    procedure init; virtual;
+    procedure StartEdit; virtual; abstract;
+    procedure EndEdit; virtual; abstract;
+    procedure SetCellText(Value: string); virtual;
     procedure Draw(Rect: TRect); virtual; abstract;
     procedure Clear; virtual; abstract;
     property Grid: TXStringgrid read GetGrid;
     property References: integer read FReferences;
   published
-    property AllowEndEditEvent: TAllowEndEditEvent read FAllowEndEditEvent write FAllowEndEditEvent;  
+    property AllowEndEditEvent: TAllowEndEditEvent read FAllowEndEditEvent write FAllowEndEditEvent;
   end;
 
   TWinControlInterface = class(TWinControl)
@@ -99,16 +108,17 @@ type
   end;
 
   TMetaCellEditor = class(TCellEditor)  // Base class for meta components
-  private
-    FEditor: TWinControl;
   protected
+    FEditor: TWinControl;
     procedure Attatch(AGrid: TXStringGrid); override;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     function InitEditor(AOwner: TComponent): TWinControl; virtual;
     function GetEditor: TWinControlInterface; virtual;
+    procedure GridWndDestroying; override;
+    procedure loaded; override;
   public
-    constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure init; override;
     procedure Draw(Rect: TRect); override;
     procedure Clear; override;
     property Editor: TWinControlInterface read GetEditor;
@@ -123,16 +133,17 @@ type
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
+    procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor);
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
   end;
 
   TEditCellEditor = class(TMetaCellEditor)
   protected
-    procedure StartEdit; override;
-    procedure EndEdit; override;
     function InitEditor(AOwner: TComponent): TWinControl; override;
   public
+    procedure StartEdit; override;
+    procedure EndEdit; override;
     procedure Draw(Rect: TRect); override;
   published
     property DefaultText;
@@ -147,21 +158,22 @@ type
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
+    procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor);
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
   end;
 
   TComboCellEditor = class(TMetaCellEditor)
   private
     FStyle: TComboBoxStyle;
   protected
-    procedure StartEdit; override;
-    procedure EndEdit; override;
     function InitEditor(AOwner: TComponent): TWinControl; override;
     function GetItems: TStrings;
     function GetStyle: TComboBoxStyle; virtual;
     procedure SetStyle(Value: TComboBoxStyle); virtual;
   public
+    procedure StartEdit; override;
+    procedure EndEdit; override;
     property Items: TStrings read GetItems;
   published
     property DefaultText;
@@ -177,8 +189,9 @@ type
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
+    procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor);
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
   end;
 
   TMaskEditCellEditor = class(TMetaCellEditor)
@@ -187,10 +200,10 @@ type
     function GetEditMask: String;
     procedure SetEditMask(Value: String);
   protected
-    procedure StartEdit; override;
-    procedure EndEdit; override;
     function InitEditor(AOwner: TComponent): TWinControl; override;
   public
+    procedure StartEdit; override;
+    procedure EndEdit; override;
     procedure Draw(Rect: TRect); override;
   published
     property DefaultText;
@@ -208,24 +221,38 @@ type
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
+    procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor);
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
     destructor Destroy; override;
     property UpDown: TUpDown read FUpDown;
   end;
 
   TUpDownCellEditor = class(TMetaCellEditor)
+  private
+    FMin: Smallint;
+    FMax: Smallint;
+    FIncrement: integer;
   protected
-    procedure Attatch(AGrid: TXStringGrid); override;
-    procedure StartEdit; override;
-    procedure EndEdit; override;
     function InitEditor(AOwner: TComponent): TWinControl; override;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    function getMin: Smallint;
+    procedure setMin(Value: Smallint);
+    function getMax: Smallint;
+    procedure setMax(Value: Smallint);
+    procedure setIncrement(Value: integer);
+    function getIncrement: integer;
   public
+    constructor create(AOwner: TComponent); override;
+    procedure StartEdit; override;
+    procedure EndEdit; override;
     procedure Draw(Rect: TRect); override;
     procedure Clear; override;
   published
     property DefaultText;
+    property Min: Smallint read getMin write setMin;
+    property Max: Smallint read getMax write setMax;
+    property Increment: integer read getIncrement write setIncrement default 1;
   end;
 
   TXStringColumnItem = class(TCollectionItem)
@@ -276,13 +303,19 @@ type
   end;
 
   TDrawEditorEvent = procedure (Sender: TObject; ACol, ARow: Longint; Editor: TCellEditor) of object;
+  TCompareProc = function(Sender: TXStringGrid; SortCol, row1, row2: integer): Integer;
+  TSwapProc = procedure(Sender: TXStringGrid; SortCol, row1, row2: integer);
 
   TXStringGrid = class(TStringgrid)
   private
+    FEditCol: integer;
+    FEditRow: integer;
+    FMultiLine: boolean;
     FCellEditor: TCellEditor;
     FColumns: TXStringColumns;
     FOnDrawEditor: TDrawEditorEvent;
     procedure SetColumns(Value: TXStringColumns);
+    procedure quickSort(col, bottom, top: integer; compare: TCompareProc; swap: TSwapProc);
   protected
     procedure SizeChanged(OldColCount, OldRowCount: Longint); override;
     procedure ColumnMoved(FromIndex, ToIndex: Longint); override;
@@ -292,22 +325,63 @@ type
     procedure DrawEditor(ACol, ARow: integer); virtual;
     procedure TopLeftChanged; override;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure DestroyWnd; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure HandleKey(var Key: Word; Shift: TShiftState);
+    procedure sort(col: integer; compare: TCompareProc; swap: TSwapProc);
     property CellEditor: TCellEditor read FCellEditor;
   published
     property Columns: TXStringColumns read FColumns write SetColumns;
     property OnDrawEditor: TDrawEditorEvent read FOnDrawEditor write FOnDrawEditor;
+    property MultiLine: boolean read FMultiLine write FMultiLine;
   end;
 
-implementation
+  function CompareProc(Sender: TXStringGrid; SortCol, row1, row2: integer): Integer;
+  procedure SwapProc(Sender: TXStringGrid; SortCol, row1, row2: integer);
 
+implementation
 uses Forms;
+
+type
+  TWinControlCracker = class(TWinControl);
 
 const
   StrCellEditorError: string = 'Cell Editor not of type TCellEditor';
   StrCellEditorAssigned: string = '%s is allready assigned to %s';
+
+function CompareProc(Sender: TXStringGrid; SortCol, row1, row2: integer): Integer;
+begin
+  with Sender do begin
+    result := AnsiCompareStr(Cells[SortCol, row1], Cells[SortCol, row2]);
+    if result <> 0 then begin
+     // Put empty cells to the back
+     if (Cells[SortCol, row1] = '') then
+        result := 1
+      else if (Cells[SortCol, row2] = '') then
+        result := -1
+    end
+    else
+      // Force a decision -> stability!
+      result := row1 - row2;
+  end;
+end;
+
+procedure SwapProc(Sender: TXStringGrid; SortCol, row1, row2: integer);
+var
+  s: string;
+  o: TObject;
+begin
+  with Sender do begin
+    s := Cells[SortCol, row1];
+    o := Objects[SortCol, row1];
+    Cells[SortCol, row1] := Cells[SortCol, row2];
+    Objects[SortCol, row1] := Objects[SortCol, row2];
+    Cells[SortCol, row2] := s;
+    Objects[SortCol, row2] := o;
+  end;
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 // private TXStringColumnItem
@@ -469,6 +543,39 @@ begin
   FColumns.assign(Value);
 end;
 
+procedure TXStringgrid.quickSort(col, bottom, top: integer; compare: TCompareProc; swap: TSwapProc);
+var
+  up, down, pivot: integer;
+begin
+  down := top;
+  up := bottom;
+  pivot := (top + bottom) div 2;
+
+  repeat
+    while compare(self, col, up, pivot) < 0 do
+      inc(up);
+
+    while compare(self, col, down, pivot) > 0 do
+      dec(down);
+
+    if up <= down then begin
+      swap(self, col, up, down);
+      if pivot = up then
+        pivot := down
+      else if pivot = down then
+        pivot := up;
+      inc(up);
+      dec(down);
+    end;
+  until up > down;
+
+  if bottom < down then
+    quickSort(col, bottom, down, compare, swap);
+
+  if up < top then
+    quickSort(col, up, top, compare, swap);
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TXStringgrid protected
 //
@@ -499,25 +606,30 @@ procedure TXStringgrid.DrawCell(ACol, ARow: Longint; ARect: TRect;
   procedure DrawCellText(Alignment: TAlignment);
   var
     s: string;
-    l: integer;
+    r: TRect;
+    a: integer;
   begin
+    r := ARect;
+    r.Top := r.Top + 2;
+    r.Bottom := r.Bottom - 2;
+    r.left := r.left + 2;
+    r.Right := r.Right - 2;
+
     case Alignment of
-      taRightJustify:  begin
-                         windows.SetTextAlign(Canvas.Handle, TA_RIGHT);
-                         l := ARect.Right - 2;
-                       end;
-      taCenter:        begin
-                         windows.SetTextAlign(Canvas.Handle, TA_CENTER);
-                         l := ARect.Left + abs(ARect.Right - ARect.Left) div 2 + 2;
-                       end;
-      else             begin
-                         windows.SetTextAlign(Canvas.Handle, TA_LEFT);
-                         l := ARect.Left + 2;
-                       end;
+      taRightJustify:  a := DT_RIGHT;
+      taCenter:        a := DT_CENTER;
+      else             a := DT_LEFT;
     end;
 
+    if FMultiLine then
+      a := a or DT_WORDBREAK
+    else
+      a := a or DT_SINGLELINE;
+
+    a := a or DT_NOPREFIX;
     s := Cells[ACol, ARow];
-    ExtTextOut(Canvas.Handle, l, ARect.Top, ETO_CLIPPED or ETO_OPAQUE, @ARect, PChar(S), Length(S), nil);
+    FillRect(Canvas.Handle, ARect, Canvas.Brush.Handle);
+    DrawText(Canvas.Handle, PChar(s), -1, r, a);
   end;
 
 var
@@ -552,9 +664,11 @@ begin
     if FColumns[Col].Editor <> nil then begin
       FCellEditor := FColumns[Col].Editor;
       FCellEditor.StartEdit;
+      FEditCol := Col;
+      FEditRow := Row;
       DrawEditor(Col, Row);
     end;
-  result := false;                                    
+  result := false;
 end;
 
 procedure TXStringgrid.DrawEditor(ACol, ARow: integer);
@@ -578,15 +692,33 @@ end;
 procedure TXStringGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   c, r: LongInt;
+  s: TGridRect;
 begin
   MouseToCell(X, Y, c, r);
-  if (goAlwaysShowEditor in Options) and (c >= FixedCols) and (r >= FixedRows) then begin
+  if (goAlwaysShowEditor in Options) and (c >= FixedCols) and
+     (r >= FixedRows) and SelectCell(c, r)
+  then begin
     if FCellEditor <> nil then
       FCellEditor.Clear;
-    row := r;
-    col := c;
+
+    s.left := c;
+    s.Right := c;
+    s.Top := r;
+    s.Bottom := r;
+    Selection := s;
   end;
   inherited MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TXStringgrid.DestroyWnd;
+var
+  c: integer;
+begin
+  for c := 0 to FColumns.count - 1 do
+    if FColumns[c].FEditor <> nil then
+      FColumns[c].FEditor.GridWndDestroying;
+
+  inherited DestroyWnd;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -610,6 +742,22 @@ begin
   inherited Destroy;
 end;
 
+procedure TXStringgrid.HandleKey(var Key: Word; Shift: TShiftState);
+begin
+  inherited KeyDown(Key, Shift);
+end;
+
+procedure TXStringGrid.sort(col: integer; compare: TCompareProc; swap: TSwapProc);
+begin
+  if not assigned(compare) then
+    compare := CompareProc;
+
+  if not assigned(swap) then
+    swap := SwapProc;
+
+  quickSort(col, FixedRows, RowCount - 1, compare, swap);
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TCellEditor
 //
@@ -626,6 +774,11 @@ begin
             Columns[c].Editor := nil;
 
   inherited destroy;
+end;
+
+procedure TCellEditor.init;
+begin
+  // empty
 end;
 
 function TCellEditor.GetGrid: TXStringgrid;
@@ -654,33 +807,48 @@ begin
     FGrid := nil;
 end;
 
+procedure TCellEditor.GridWndDestroying;
+begin
+end;
+
+procedure TCellEditor.SetCellText(Value: string);
+begin
+  with Grid do
+    SetEditText(FEditCol, FEditRow, Value);
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TMetaCellEditor public
 //
 
-constructor TMetaCellEditor.Create(AOwner: TComponent);
+procedure TMetaCellEditor.loaded;
 begin
-  inherited Create(AOwner);
-  if csDesigning in ComponentState then
-    FEditor := nil
-  else begin
-    try
-      FEditor := InitEditor(AOwner);
-      if FEditor = nil then
-        raise ECellEditorError.Create(StrCellEditorError);
-
-      FEditor.FreeNotification(self);  // Notify me if FEditor gets freed by someone
-      (AOwner as TWinControl).InsertControl(FEditor);
-    except
-      raise ECellEditorError.Create(StrCellEditorError);
-    end;
-  end;
+  inherited loaded;
+  Init;
 end;
 
 destructor TMetaCellEditor.Destroy;
 begin
   FEditor.free;            // FEdit propably set to nil by notification
   inherited Destroy;       // method. So FEdit has been freed allready
+end;
+
+procedure TMetaCellEditor.init;
+begin
+  if csDesigning in ComponentState then
+    FEditor := nil
+  else begin
+    try
+      FEditor := InitEditor(Owner);
+      if FEditor = nil then
+        raise ECellEditorError.Create(StrCellEditorError);
+
+      FEditor.FreeNotification(self);  // Notify me if FEditor gets freed by someone
+      (Owner as TWinControl).InsertControl(FEditor);
+    except
+      raise ECellEditorError.Create(StrCellEditorError);
+    end;
+  end;
 end;
 
 procedure TMetaCellEditor.Draw(Rect: TRect);
@@ -711,7 +879,7 @@ end;                               // so I can accss this here
 procedure TMetaCellEditor.Attatch(AGrid: TXStringGrid);
 begin
   inherited Attatch(AGrid);
-  if not (csDesigning in ComponentState) then
+  if not (csDesigning in ComponentState) and (FEditor <> nil) and (Grid <> nil) then
     windows.SetParent(FEditor.Handle, Grid.Handle);
 end;
 
@@ -734,6 +902,12 @@ begin
   result := TWinControlInterface(FEditor);
 end;
 
+procedure TMetaCellEditor.GridWndDestroying;
+begin
+  if FEditor <> nil then
+    TWinControlCracker(FEditor).DestroyWnd;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // TEditInplace private
 //
@@ -748,6 +922,7 @@ procedure TEditInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
   AllowEndEdit: boolean;
 begin
+  AllowEndEdit := false;
   if Key in [VK_TAB, VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT] then begin
     case Key of
       VK_UP:     AllowEndEdit := true;
@@ -756,15 +931,15 @@ begin
       VK_RIGHT:  AllowEndEdit := (SelLength = 0) and (SelStart >= length(Text));
       VK_TAB:    AllowEndEdit := goTabs in FCellEditor.FGrid.Options
     end;
+  end;
 
-    if assigned(FCellEditor.FAllowEndEditEvent) then
-      FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
-    if AllowEndEdit then begin
-      DoExit;
-      FCellEditor.Grid.KeyDown(Key, Shift);
-      FCellEditor.Grid.SetFocus;
-      Key := 0;
-    end;
+  if assigned(FCellEditor.FAllowEndEditEvent) then
+    FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
+  if AllowEndEdit then begin
+    DoExit;
+    FCellEditor.Grid.KeyDown(Key, Shift);
+    FCellEditor.Grid.SetFocus;
+    Key := 0;
   end;
   if Key <> 0 then
     inherited KeyDown(Key, Shift);
@@ -782,7 +957,10 @@ begin
   if Key = #13 then begin
     FCellEditor.Grid.SetFocus;
     Key := #0;
-  end;
+  end
+  else if Key = #9 then
+    Key := #0;
+
   if Key <> #0 then
     inherited KeyPress(Key);
 end;
@@ -792,6 +970,13 @@ begin
   FCellEditor.EndEdit;
   FCellEditor.Clear;
   inherited
+end;
+
+procedure TEditInplace.CreateWnd;
+begin
+  inherited CreateWnd;
+  if FCellEditor.grid <> nil then
+    windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -837,14 +1022,19 @@ begin
 end;
 
 procedure TEditCellEditor.StartEdit;
+var
+  s: string;
 begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
   with FEditor as TEditInplace do begin
-    Text := Grid.GetEditText(Grid.Col, Grid.Row);
-    if Text = '' then
-      Text := FDefaultText;
+    s := Grid.GetEditText(Grid.Col, Grid.Row);
+    if s = '' then
+      Text := FDefaultText
+    else
+      Text := s;
+
     SelStart := 0;
     SelLength := -1;
   end;
@@ -855,8 +1045,7 @@ begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
-  with Grid do
-    SetEditText(Col, Row, (FEditor as TEditInplace).Text);
+  SetCellText((FEditor as TEditInplace).Text);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -872,6 +1061,7 @@ procedure TComboInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
   AllowEndEdit: boolean;
 begin
+  AllowEndEdit := false;
   if Key in [VK_TAB, VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT] then begin
     case Key of
       VK_UP:     AllowEndEdit := false;
@@ -880,15 +1070,15 @@ begin
       VK_RIGHT:  AllowEndEdit := ((SelLength = 0) and (SelStart >= length(Text))) or (Style <> csDropDown);
       VK_TAB:    AllowEndEdit := goTabs in FCellEditor.FGrid.Options
     end;
+  end;
 
-    if assigned(FCellEditor.FAllowEndEditEvent) then
-      FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
-    if AllowEndEdit then begin
-      DoExit;
-      FCellEditor.Grid.KeyDown(Key, Shift);
-      FCellEditor.Grid.SetFocus;
-      Key := 0;
-    end;
+  if assigned(FCellEditor.FAllowEndEditEvent) then
+    FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
+  if AllowEndEdit then begin
+    DoExit;
+    FCellEditor.Grid.KeyDown(Key, Shift);
+    FCellEditor.Grid.SetFocus;
+    Key := 0;
   end;
   if Key <> 0 then
     inherited KeyDown(Key, Shift);
@@ -906,7 +1096,10 @@ begin
   if Key = #13 then begin
     FCellEditor.Grid.SetFocus;
     Key := #0;
-  end;
+  end
+  else if Key = #9 then
+    Key := #0;
+
   if Key <> #0 then
     inherited KeyPress(Key);
 end;
@@ -916,6 +1109,13 @@ begin
   FCellEditor.EndEdit;
   FCellEditor.Clear;
   inherited
+end;
+
+procedure TComboInplace.CreateWnd;
+begin
+  inherited CreateWnd;
+  if FCellEditor.grid <> nil then
+    windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -958,13 +1158,13 @@ begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
-  with Grid do
-    SetEditText(Col, Row, (FEditor as TComboInplace).Text);
+  SetCellText((FEditor as TComboInplace).Text);
 end;
 
 function TComboCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 begin
   result := TComboInplace.Create(AOwner, self);
+  TComboInplace(result).Style := FStyle;
 end;
 
 function TComboCellEditor.GetItems: TStrings;
@@ -1001,6 +1201,7 @@ procedure TMaskEditInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
   AllowEndEdit: boolean;
 begin
+  AllowEndEdit := false;
   if Key in [VK_TAB, VK_UP, VK_DOWN] then begin                         // I cannot handle other keys here
     case Key of                                                         // Since the validation mechanism
       VK_UP,                                                            // of TMaskEdit seems to send Keystrokes
@@ -1032,7 +1233,10 @@ begin
   if Key = #13 then begin
     FCellEditor.Grid.SetFocus;
     Key := #0;
-  end;
+  end
+  else if Key = #9 then
+    Key := #0;
+
   if Key <> #0 then
     inherited KeyPress(Key);
 end;
@@ -1042,6 +1246,13 @@ begin
   FCellEditor.EndEdit;
   FCellEditor.Clear;
   inherited
+end;
+
+procedure TMaskEditInplace.CreateWnd;
+begin
+  inherited CreateWnd;
+  if FCellEditor.grid <> nil then
+    windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1102,17 +1313,22 @@ end;
 function TMaskEditCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 begin
   result := TMaskEditInplace.Create(AOwner, self);
+  TMaskEditInplace(result).EditMask := FEditMask;
 end;
 
 procedure TMaskEditCellEditor.StartEdit;
+var
+  s: string;
 begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
   with FEditor as TMaskEditInplace do begin
-    Text := Grid.GetEditText(Grid.Col, Grid.Row);
-    if Text = '' then
-      Text := FDefaultText;
+    s := Grid.GetEditText(Grid.Col, Grid.Row);
+    if s = '' then
+      Text := FDefaultText
+    else
+      Text := s;
   end;
 end;
 
@@ -1121,8 +1337,7 @@ begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
-  with Grid do
-    SetEditText(Col, Row, (FEditor as TMaskEditInplace).Text);
+  SetCellText((FEditor as TMaskEditInplace).Text);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1135,8 +1350,10 @@ var
 begin
   c := StrToIntDef(Text, 0);
   case Button of
-    btNext:  inc(c);
-    btPrev:  dec(c);
+    btNext:  if c + FUpDown.Increment <= FUpDown.Max then
+               inc(c, FUpDown.Increment);
+    btPrev:  if c - FUpDown.Increment >= FUpDown.Min then
+               dec(c, FUpDown.Increment);
   end;
   FUpDown.Position := c;
   Text := IntToStr(c);
@@ -1151,6 +1368,7 @@ procedure TUpDownInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
   AllowEndEdit: boolean;
 begin
+  AllowEndEdit := false;
   if Key in [VK_TAB, VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT] then begin
     case Key of
       VK_UP:     AllowEndEdit := false;
@@ -1159,15 +1377,15 @@ begin
       VK_RIGHT:  AllowEndEdit := (SelLength = 0) and (SelStart >= length(Text));
       VK_TAB:    AllowEndEdit := goTabs in FCellEditor.FGrid.Options;
     end;
+  end;
 
-    if assigned(FCellEditor.FAllowEndEditEvent) then
-      FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
-    if AllowEndEdit then begin
-      DoExit;
-      FCellEditor.Grid.KeyDown(Key, Shift);
-      FCellEditor.Grid.SetFocus;
-      Key := 0;
-    end;
+  if assigned(FCellEditor.FAllowEndEditEvent) then
+    FCellEditor.FAllowEndEditEvent(self, Key, Shift, AllowEndEdit);
+  if AllowEndEdit then begin
+    DoExit;
+    FCellEditor.Grid.KeyDown(Key, Shift);
+    FCellEditor.Grid.SetFocus;
+    Key := 0;
   end;
   if Key = VK_DOWN then begin
     FUpDown.OnClick(self, btPrev);
@@ -1193,7 +1411,10 @@ begin
   if Key = #13 then begin
     FCellEditor.Grid.SetFocus;
     Key := #0;
-  end;
+  end
+  else if Key = #9 then
+    Key := #0;
+
   if Key <> #0 then
     inherited KeyPress(Key);
 end;
@@ -1203,6 +1424,15 @@ begin
   FCellEditor.EndEdit;
   FCellEditor.Clear;
   inherited
+end;
+
+procedure TUpDownInplace.CreateWnd;
+begin
+  inherited CreateWnd;
+  if FCellEditor.grid <> nil then begin
+    windows.SetParent(FUpDown.Handle, FCellEditor.FGrid.Handle);
+    windows.SetParent(Handle, FCellEditor.grid.Handle);
+  end;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1216,11 +1446,12 @@ begin
   with FUpDown do begin
     visible := false;
     TabStop := false;
-    Max := 32767;
-    Min := -32768;
+    Max := TUpDownCellEditor(CellEditor).Max;
+    Min := TUpDownCellEditor(CellEditor).Min;
+    Increment := TUpDownCellEditor(CellEditor).Increment;
     OnClick := UpDownClick;
   end;
-  FCellEditor := CellEditor;       
+  FCellEditor := CellEditor;
   visible := false;
   Ctl3d := false;
   BorderStyle := bsNone;
@@ -1238,21 +1469,27 @@ end;
 // TUpDownCellEditor public
 //
 
+constructor TUpDownCellEditor.create(AOwner: TComponent);
+begin
+  inherited create(AOwner);
+  FIncrement := 1;
+end;
+
 procedure TUpDownCellEditor.Draw(Rect: TRect);
 begin
   if FEditor = nil then
     exit;
 
-  Inc(Rect.Left);
-  Dec(Rect.Right);
-  Inc(Rect.Top);
-  Dec(Rect.Bottom);
-  inherited Draw(Rect);
-
   with TUpDownInplace(FEditor) do begin
-    UpDown.left := Rect.right - UpDown.width;
-    UpDown.top := Rect.top;
-    UpDown.height := Rect.bottom - Rect.top;
+    Inc(Rect.Left);
+    Rect.Right := Rect.Right - UpDown.Width;
+    Inc(Rect.Top);
+    Dec(Rect.Bottom);
+    inherited Draw(Rect);
+
+    UpDown.left := Rect.right;
+    UpDown.top := Rect.Top;
+    UpDown.height := Rect.bottom - Rect.Top;
     UpDown.visible := true;
   end;
 end;
@@ -1266,13 +1503,6 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 // TUpDownCellEditor protected
 //
-
-procedure TUpDownCellEditor.Attatch(AGrid: TXStringGrid);
-begin
-  inherited Attatch(AGrid);
-  if not (csDesigning in ComponentState) then
-    windows.SetParent((FEditor as TUpDownInplace).UpDown.Handle, Grid.Handle);
-end;
 
 function TUpDownCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 var
@@ -1314,19 +1544,66 @@ begin
   if (FEditor = nil) or (Grid = nil) then
     exit;
 
-  with Grid do
-    SetEditText(Col, Row, (FEditor as TUpDownInplace).Text);
+  SetCellText((FEditor as TUpDownInplace).Text);
 end;
 
-procedure TUpDownCellEditor.Notification(AComponent: TComponent; Operation: TOperation); 
+procedure TUpDownCellEditor.Notification(AComponent: TComponent; Operation: TOperation);
 begin
   inherited Notification(AComponent, Operation);
 
   if (Operation <> opRemove) or (FEditor = nil) then
     exit;
-    
+
   if AComponent = TUpDownInplace(FEditor).UpDown then
     TUpDownInplace(FEditor).FUpDown := nil;
+end;
+
+function TUpDownCellEditor.getMin: Smallint;
+begin
+  if FEditor = nil then
+    result := FMin
+  else
+    result := TUpDownInplace(FEditor).FUpDown.Min;
+end;
+
+procedure TUpDownCellEditor.setMin(Value: Smallint);
+begin
+  if FEditor = nil then
+    FMin := Value
+  else
+    TUpDownInplace(FEditor).FUpDown.Min := Value;
+end;
+
+function TUpDownCellEditor.getMax: Smallint;
+begin
+  if FEditor = nil then
+    result := FMax
+  else
+    result := TUpDownInplace(FEditor).FUpDown.Max;
+end;
+
+procedure TUpDownCellEditor.setMax(Value: Smallint);
+begin
+  if FEditor = nil then
+    FMax := Value
+  else
+    TUpDownInplace(FEditor).FUpDown.Max := Value;
+end;
+
+procedure TUpDownCellEditor.setIncrement(Value: integer);
+begin
+  if FEditor = nil then
+    FIncrement := Value
+  else
+    TUpDownInplace(FEditor).FUpDown.Increment := Value;
+end;
+
+function TUpDownCellEditor.getIncrement: integer;
+begin
+  if FEditor = nil then
+    result := FIncrement
+  else
+    result := TUpDownInplace(FEditor).FUpDown.Increment;
 end;
 
 end.

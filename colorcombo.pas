@@ -93,7 +93,7 @@ const
 
 procedure Register;
 begin
-  RegisterComponents('Additional', [TColorCombo]);
+  RegisterComponents('XStringGrid', [TColorCombo]);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
