@@ -41,6 +41,7 @@ contains
   CEForm,
   CEFormRegister,
   CEButton,
-  colorcombo;
+  colorcombo,
+  CECheckbox;
 
 end.
