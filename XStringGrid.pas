@@ -13,7 +13,7 @@
   ------------------------------------------------------------------------------
     (C) 1999  M. Dürig
               CH-4056 Basel
-              mduerig@eye.ch / www.eye.ch/~mduerig
+              mduerig@eye.ch / http://www.eye.ch/~mduerig
   ------------------------------------------------------------------------------
     History:  11.03.97md  v1.0 Release v1.0
               14.09.97md  v1.1 Bugs fixed
@@ -45,7 +45,7 @@
               12.08.01md  v2.5 Fixed problem when grid used in a frame.
                                Thanks to Andreas Schmidt
               13.08.01md  v2.5 Fixed problem with aligning the grid
-              16.08.01md  v2.5 Fixed problem with editors in apperaing fixed rows
+              16.08.01md  v2.5 Fixed problem with editors in appearing fixed rows
               16.08.01md  v2.5 Release 2.5
 ------------------------------------------------------------------------------
 }
@@ -401,6 +401,7 @@ type
     procedure WMChar(var Msg: TWMChar); message WM_CHAR;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure DestroyWnd; override;
+    procedure WMCommand(var Message: TWMCommand); message WM_COMMAND;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -820,8 +821,8 @@ begin
 
  if assigned(FOnDrawEditor) then
    OnDrawEditor(self, ACol, ARow, FColumns[ACol].Editor)
-  else
-    FColumns[ACol].ShowEditor(ARow);
+ else
+   FColumns[ACol].ShowEditor(ARow);
 end;
 
 procedure TXStringGrid.TopLeftChanged;
@@ -858,13 +859,18 @@ begin
     if FCellEditor <> nil then
       FCellEditor.Clear;
 
-    s.left := c;
-    s.Right := c;
-    s.Top := r;
-    s.Bottom := r;
-    Selection := s;
+    if (c >= FixedCols) and (r >= FixedRows) then begin
+      s.left := c;
+      s.Right := c;
+      s.Top := r;
+      s.Bottom := r;
+      Selection := s;
+    end;
   end;
   inherited MouseDown(Button, Shift, X, Y);
+
+  if (FCellEditor = nil) and not (goAlwaysShowEditor in Options) then
+    EditorMode := false;
 end;
 
 procedure TXStringgrid.DestroyWnd;
@@ -922,6 +928,26 @@ begin
     swap := SwapProc;
 
   quickSort(col, FixedRows, RowCount - 1, compare, swap);
+end;
+
+// This is a workaround for a VCL weirdness which I don't really understand.
+// It seems that TCustomGrid.WMCommand forgets to call inherited (bug?)
+// because the events checkbox doesn't work as expected. However, fixing
+// this 'bug' causes the button not to work as expected.
+// Therefore I'm 'fixing' this for the checkbox only, so everything hopefully works
+// as expected.
+{ TODO : Test (D6 ok) }
+procedure TXStringGrid.WMCommand(var Message: TWMCommand);
+var
+  Control: TWinControl;
+begin
+  Control := FindControl(Message.Ctl);
+  if Control is TCheckBox then
+    with TMessage(Message) do
+      Result := Control.Perform(Msg + CN_BASE, WParam, LParam)
+
+  else
+    inherited;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1927,7 +1953,6 @@ begin
   else
     result := TUpDownInplace(FEditor).FUpDown.Increment;
 end;
-
 
 end.
 
