@@ -851,6 +851,7 @@ begin
       DrawEditor(Col, Row);
     end;
 
+  LastChar := 0;
   result := false;
 end;
 
@@ -1149,7 +1150,8 @@ end;
 procedure TMetaCellEditor.GridWndDestroying;
 begin
   if FEditor <> nil then
-    TWinControlCracker(FEditor).DestroyWnd;
+//    if TWinControlCracker(FEditor).Handle <> 0 then
+      TWinControlCracker(FEditor).DestroyWnd;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
