@@ -15,11 +15,15 @@ your problems.
 
 INSTALLATION
 
-Use XStringGridRegister.pas to register the components. After successfull registering the XStringGrid components are available on the additional palette.
+First install colorcombo.pas and then XStringGridRegister.pas to register the 
+components . After successful registering the XStringGrid components are 
+available on the additional palette.
+User of Delphi 3 and Delphi 4 can alternatively use XStringGrd.dpk to build 
+run/design time packages.
 
 
 Michael Dürig
 CH-4056 Basel
 mduerig@eye.ch
 
-13.10.97md
+07.08.98md
