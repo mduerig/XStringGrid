@@ -8,7 +8,7 @@
   ----------------------------------------------------------------------------
     (C) 1997  M. Dürig
               CH-4056 Basel
-              mduerig@eye.ch / www.eye.ch/~mduerig
+              mduerig@eye.ch / http://www.eye.ch/~mduerig
   ----------------------------------------------------------------------------
     History:  11.03.97md  v1.0 Release v1.0
               14.09.97md  v1.1 Added Component Editor

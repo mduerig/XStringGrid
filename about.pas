@@ -7,7 +7,7 @@
   ----------------------------------------------------------------------------
     (C) 1997  M. Dürig
               CH-4056 Basel
-              mduerig@eye.ch / www.eye.ch/~mduerig
+              mduerig@eye.ch / http://www.eye.ch/~mduerig
   ----------------------------------------------------------------------------
     History:  11.3.97md   v1.0 Release v1.0
               12.08.99md  v2.0 Release v2.0

@@ -8,7 +8,7 @@
   ------------------------------------------------------------------------------
     (C) 1999  M. Dürig
               CH-4056 Basel
-              mduerig@eye.ch / www.eye.ch/~mduerig
+              mduerig@eye.ch / http://www.eye.ch/~mduerig
   ------------------------------------------------------------------------------
     History:  05.07.99md  v1.0  Creation
               12.07.99md  v1.0  Change to BitBtn
