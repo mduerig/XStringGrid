@@ -15,16 +15,14 @@ VERSION = BCB.03
 # ---------------------------------------------------------------------------
 PROJECT = XStringGrid_BC3.bpl
 OBJFILES = XStringGridRegister.obj CEFormRegister.obj CECheckList.obj CEForm.obj \
-  CEButton.obj XStringGrid_BC3.obj
-RESFILES = XStringGrid_BC3.res XStringGridRegister.dcr
+  CEButton.obj colorcombo.obj XStringGrid.obj about.obj XStringGrid_BC3.obj
+RESFILES = XStringGrid_BC3.res XStringGridRegister.dcr colorcombo.dcr
 DEFFILE =
-RESDEPEN = $(RESFILES)
+RESDEPEN = $(RESFILES) about.dfm
 LIBFILES =
 LIBRARIES =
-SPARELIBS = VCL35.lib vcldb35.lib
-PACKAGES = vclx35.bpi VCL35.bpi vcldb35.bpi vcldbx35.bpi bcbsmp35.bpi dclocx35.bpi \
-  Qrpt35.bpi teeui35.bpi teedb35.bpi tee35.bpi ibsmp35.bpi NMFast35.bpi \
-  inetdb35.bpi inet35.bpi
+SPARELIBS = VCL35.lib vcldb35.lib vclx35.lib
+PACKAGES = vclx35.bpi VCL35.bpi vcldb35.bpi
 # ---------------------------------------------------------------------------
 PATHCPP = .;
 PATHASM = .;
@@ -76,8 +74,6 @@ OriginalFilename=
 ProductName=
 ProductVersion=1.0.0.0
 Comments=
-
-[Excluded Packages]
 
 [HistoryLists\hlIncludePath]
 Count=1

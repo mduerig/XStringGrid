@@ -18,8 +18,9 @@ unit about;
 
 interface
 
-uses Windows, SysUtils, Classes, Graphics, Forms, Controls, StdCtrls,
-  Buttons, ExtCtrls;
+uses
+  Windows, SysUtils, Classes, Graphics, Forms, Controls, StdCtrls, Buttons,
+  ExtCtrls;
 
 type
   TAboutBox = class(TForm)
@@ -40,7 +41,8 @@ type
   end;
 
 implementation
-uses shellapi;
+uses
+  shellapi;
 
 {$R *.DFM}
 

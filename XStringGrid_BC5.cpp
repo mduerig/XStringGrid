@@ -2,8 +2,6 @@
 #include <vcl.h>
 #pragma hdrstop
 USERES("XStringGrid_BC3.res");
-USEPACKAGE("vclx35.bpi");
-USEPACKAGE("VCL35.bpi");
 USEUNIT("XStringGridRegister.pas");
 USERES("XStringGridRegister.dcr");
 USEUNIT("CEFormRegister.pas");
@@ -12,9 +10,12 @@ USEUNIT("CEForm.pas");
 USEUNIT("CEButton.pas");
 USEUNIT("colorcombo.pas");
 USERES("colorcombo.dcr");
-USEPACKAGE("vcldb35.bpi");
 USEUNIT("XStringGrid.pas");
 USEFORMNS("about.pas", About, AboutBox);
+USEPACKAGE("vclx50.bpi");
+USEPACKAGE("vcl50.bpi");
+USEPACKAGE("vcldb50.bpi");
+USEPACKAGE("vclbde50.bpi");
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 //---------------------------------------------------------------------------

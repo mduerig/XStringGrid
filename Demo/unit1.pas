@@ -11,6 +11,7 @@
   ----------------------------------------------------------------------------
     History:  13.10.97md  v1.0 Release v1.0
               12.08.99md  v2.0 Release v2.0
+              16.08.01md  v2.5 Release 2.5
   ----------------------------------------------------------------------------
 }
 unit Unit1;
@@ -43,6 +44,7 @@ type
     FormCellEditor2: TFormCellEditor;
     cbSortWholeRows: TCheckBox;
     cbSortDesc: TCheckBox;
+    Label1: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure miLeftAlignClick(Sender: TObject);
     procedure miRightAlignClick(Sender: TObject);
@@ -60,6 +62,7 @@ type
     procedure FormCellEditor2StartEdit(Sender: TObject);
     procedure xgMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
+    procedure EditCellEditor1ElipsisClick(Sender: TObject);
   private
     CurrentRow: Longint;
     CurrentCol: Longint;
@@ -101,6 +104,8 @@ begin
 end;
 
 procedure TDemoForm.FormCreate(Sender: TObject);
+var
+  i: integer;
 begin
   ComboCellEditor1.Items.Add('Betty Boo');
   ComboCellEditor1.Items.Add('John Zorn');
@@ -110,6 +115,9 @@ begin
   CheckListCellEditor1.Items.add('B');
   CheckListCellEditor1.Items.add('C');
   CheckListCellEditor1.Items.add('D');
+
+  for i := 1 to xg.RowCount - 1 do
+    xg.Cells[1, i] := format('%2d', [xg.RowCount - i]);
 end;
 
 procedure TDemoForm.miLeftAlignClick(Sender: TObject);
@@ -224,6 +232,17 @@ begin
       c := DescSortCompareProc;
 
     xg.sort(CurrentCol, c, s);
+  end;
+end;
+
+procedure TDemoForm.EditCellEditor1ElipsisClick(Sender: TObject);
+var
+  s: string;
+begin
+  with xg do begin
+    s := EditCellEditor1.Editor.Text;
+    if InputQuery('XString Grid Demo', 'More: ', s) then
+      EditCellEditor1.Editor.Text := s;
   end;
 end;
 

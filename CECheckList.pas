@@ -14,12 +14,18 @@
               05.07.99md  v1.0a Included suggestions of Jacob Pedersen
               03.08.99md  v1.2 Fixed RecreateWnd bug. (q)
               12.08.99md  v2.0 Release v2.0
+              26.11.2k md v2.1 Included new features from Marcus Wirth
+              10.08.01md  v2.5 ImmediateEditMode added. Thanx to Ahmet Semiz
+              16.08.01md  v2.5 Release 2.5
   ------------------------------------------------------------------------------
 }
+
+{$I VERSIONS.INC}
 unit CECheckList;
 
 interface
-uses windows, messages, classes, Controls, checklst, XStringGrid;
+uses
+  windows, messages, classes, Controls, checklst, XStringGrid;
 
 type
   TCheckListCellEditor = class;
@@ -33,13 +39,16 @@ type
   private
     FCellEditor: TCellEditor;
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor);
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF}
   end;
 
   TCheckListCellEditor = class(TMetaCellEditor)
@@ -48,22 +57,23 @@ type
     FWidth: integer;
     FColumns: integer;
     FDropDownStyle: TDropDownStyle;
+    FItems: TStrings;
     FOnSetChecks: TSetChecksEvent;
     FOnSetText: TSetTextEvent;
     function getColumns: integer;
     procedure setColumns(Value: integer);
   protected
     function InitEditor(AOwner: TComponent): TWinControl; override;
-    function getItems: TStrings;
+    procedure SetItems(Value: TStrings);
     function getChecked(Index: integer): boolean;
     procedure setChecked(Index: integer; Value: boolean);
   public
     constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
     procedure StartEdit; override;
     procedure EndEdit; override;
     procedure Draw(Rect: TRect); override;
-    property Items: TStrings read GetItems;
-    property checked[Index: integer]: boolean read getChecked write setChecked;
+    property Checked[Index: integer]: boolean read getChecked write setChecked;
   published
     property DropdownHeight: integer read FHeight write FHeight;
     property DropDownStyle: TDropDownStyle read FDropDownStyle write FDropDownStyle;
@@ -71,12 +81,14 @@ type
     property OnSetChecks: TSetChecksEvent read FOnSetChecks write FOnSetChecks;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
     property Columns: integer read getColumns write setColumns;
+    property Items: TStrings read FItems write SetItems;
   end;
 
 procedure Register;
 
 implementation
-uses grids;
+uses
+  grids;
 
 procedure Register;
 begin
@@ -87,8 +99,15 @@ end;
 
 constructor TCheckListCellEditor.Create(AOwner: TComponent);
 begin
+  inherited Create(AOwner);
   FHeight := 50;
-  inherited create(AOwner);
+  FItems := TStringList.Create;
+end;
+
+destructor TCheckListCellEditor.Destroy;
+begin
+  FItems.Free;
+  inherited Destroy;
 end;
 
 function TCheckListCellEditor.getColumns: integer;
@@ -110,11 +129,16 @@ end;
 procedure TCheckListCellEditor.StartEdit;
 begin
   if (FEditor = nil) or (Grid = nil) then
-    exit;
+    init;
 
-  with FEditor as TCheckListInplace do
+  with FEditor as TCheckListInplace do begin
+    Items.Assign(FItems);
+    if Grid.LastChar <> 0 then
+      PostMessage(Handle, WM_KEYDOWN, integer(upcase(char(Grid.LastChar))), 0);
+
     if Assigned(FOnSetChecks) then
       FOnSetChecks(self);
+  end;
 end;
 
 procedure TCheckListCellEditor.EndEdit;
@@ -146,9 +170,11 @@ begin
   (FEditor as TCheckListInplace).checked[Index] := Value;
 end;
 
-function TCheckListCellEditor.GetItems: TStrings;
+procedure TCheckListCellEditor.SetItems(Value: TStrings);
 begin
-  result := (FEditor as TCheckListInplace).Items;
+  FItems.Assign(Value);
+  if FEditor <> nil
+    then (FEditor as TCheckListInplace).Items.Assign(Value);
 end;
 
 procedure TCheckListCellEditor.Draw(Rect: TRect);
@@ -206,6 +232,13 @@ begin
 end;
 
 // -- TCheckListInplace -------------------------------------------------------
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TCheckListInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
 
 procedure TCheckListInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
@@ -280,3 +313,4 @@ begin
 end;
 
 end.
+

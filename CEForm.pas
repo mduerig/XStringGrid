@@ -3,7 +3,7 @@
     Filename: CEForm.pas
     Version:  v1.0
     Authors:  Michael Dürig (md)
-    Purpose:  Grid cell editor using a form custom designed form. 
+    Purpose:  Grid cell editor using a form custom designed form.
     Remark:   Needs TXStringGrid v1.2
   ------------------------------------------------------------------------------
     (C) 1999  M. Dürig
@@ -12,12 +12,17 @@
   ------------------------------------------------------------------------------
     History:  05.07.99md  v1.0  Creation
               12.08.99md  v2.0 Release v2.0
+              25.02.2k md v2.0 Fixed bug with runtime assigning
+              16.08.01md  v2.5 Release 2.5
   ------------------------------------------------------------------------------
 }
+
+{$I VERSIONS.INC}
 unit CEForm;
 
 interface
-uses windows, graphics, messages, classes, Controls, XStringGrid, forms;
+uses
+  windows, graphics, messages, classes, Controls, XStringGrid, forms;
 
 type
   TFormInplace = class(TForm)
@@ -29,7 +34,7 @@ type
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure DoExit; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;  
   end;
 
   TFormInplaceName = string;
@@ -46,6 +51,7 @@ type
     procedure setCellEditorForm(Value: string);
   protected
     function InitEditor(AOwner: TComponent): TWinControl; override;
+    procedure Attatch(AGrid: TXStringGrid); override;
   public
     constructor Create(AOwner: TComponent); override;
     procedure StartEdit; override;
@@ -60,7 +66,8 @@ type
   end;
 
 implementation
-uses grids;
+uses
+  grids;
 
 // -- TFormCellEditor ----------------------------------------------------
 
@@ -107,7 +114,7 @@ end;
 procedure TFormCellEditor.Draw(Rect: TRect);
 begin
   if FEditor = nil then
-    exit;
+    init;
 
   with FEditor do begin
     Parent := grid;
@@ -211,6 +218,14 @@ begin
   HorzScrollBar.visible := false;
   visible := false;
   TabStop := false;
+end;
+
+procedure TFormCellEditor.Attatch(AGrid: TXStringGrid);
+begin
+  if FEditor <> nil then
+    FEditor.Parent := AGrid;
+    
+  inherited Attatch(AGrid);
 end;
 
 end.

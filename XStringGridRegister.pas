@@ -15,26 +15,32 @@
               07.08.98md  v1.1 Little patch for D4
               12.08.99md  v2.0 Release v2.0
               03.10.99md  v2.0 Components go to separate Palette
+              26.11.2k md v2.1 Included new features from Marcus Wirth
   ----------------------------------------------------------------------------
 }
 
+{$I VERSIONS.INC}
 unit XStringGridRegister;
 
 interface
 
-uses Windows, Messages, SysUtils, Classes,
-  Graphics, Controls, Forms, Dialogs, XStringGrid, StdCtrls, DsgnIntf, ComCtrls,
-  colorcombo, Grids, DBGrids;
+uses
+  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
+  XStringGrid, StdCtrls, ComCtrls, colorcombo, Grids, DBGrids,
+{$IFNDEF DSGNINTF_GONE}
+  DsgnIntf;
+{$ELSE}
+  DesignEditors, DesignIntf;
+{$ENDIF}
 
 type
-{$IFDEF VER100}  // D3
+{$IFDEF NOIFORMDESIGNER}
   IFormDesigner = TFormDesigner;
 {$ENDIF}
 
-{$IFDEF VER110}  // BCB3
-  IFormDesigner = TFormDesigner;
+{$IFDEF IFORMDESIGNER_MOVED}
+  IFormDesigner = DesignIntf.IDesigner;
 {$ENDIF}
-
 
   TXStringColumnsProperty = class(TClassProperty)
     procedure Edit; override;
@@ -43,8 +49,13 @@ type
 
   TXStringColumnsEditor = class(TDefaultEditor)
   protected
+{$IFDEF EDITPROPERTY_CHANGED}
+    procedure EditProperty(const PropertyEditor: IProperty;     
+      var Continue: Boolean); override;
+{$ELSE}
     procedure EditProperty(PropertyEditor: TPropertyEditor;
       var Continue, FreeEditor: Boolean); override;
+{$ENDIF}
   public
     procedure ExecuteVerb(Index: Integer); override;
     function GetVerb(Index: Integer): string; override;
@@ -58,22 +69,26 @@ type
     GroupBox1: TGroupBox;
     LBColumns: TListBox;
     GroupBox2: TGroupBox;
-    EditHeader: TEdit;
     TBWidth: TTrackBar;
     LabelWidth: TLabel;
+    Label1: TLabel;
+    btnAbout: TButton;
+    GroupBox3: TGroupBox;
+    Label2: TLabel;
+    EditHeader: TEdit;
+    Label7: TLabel;
+    CBHdrAlignment: TComboBox;
+    BtnHdrFont: TButton;
+    GroupBox4: TGroupBox;
+    Label6: TLabel;
+    CBAlignment: TComboBox;
+    Label4: TLabel;
     CBColor: TColorCombo;
+    Label3: TLabel;
     CBHdrColor: TColorCombo;
     BtnFont: TButton;
-    BtnHdrFont: TButton;
-    CBEditor: TComboBox;
-    Label1: TLabel;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
     Label5: TLabel;
-    btnAbout: TButton;
-    CBAlignment: TComboBox;
-    Label6: TLabel;
+    CBEditor: TComboBox;
     procedure LBColumnsClick(Sender: TObject);
     procedure TBWidthChange(Sender: TObject);
     procedure EditHeaderExit(Sender: TObject);
@@ -85,6 +100,7 @@ type
     procedure CBEditorChange(Sender: TObject);
     procedure btnAboutClick(Sender: TObject);
     procedure CBAlignmentChange(Sender: TObject);
+    procedure CBHdrAlignmentChange(Sender: TObject);
   private
     FColumns: TXStringColumns;
     FDesigner: IFormDesigner;
@@ -94,6 +110,8 @@ type
     procedure SetColCaption(Value: TCaption);
     function GetAlignment: TAlignment;
     procedure SetAlignment(Value: TAlignment);
+    function GetHdrAlignment: TAlignment;
+    procedure SetHdrAlignment(Value: TAlignment);
     function GetColWidth: integer;
     procedure SetColWidth(Value: integer);
     function GetColColor: TColor;
@@ -108,6 +126,7 @@ type
     procedure SetCellEditor(Value: TCellEditor);
     property ColCaption: TCaption read GetColCaption write SetColCaption;
     property Aligmnent: TAlignment read GetAlignment write SetAlignment;
+    property HdrAlignment: TAlignment read GetHdrAlignment write SetHdrAlignment;
     property ColWidth: integer read GetColWidth write SetColWidth;
     property ColColor: TColor read GetColColor write SetColColor;
     property ColHdrColor: TColor read GetColHdrColor write SetColHdrColor;
@@ -115,7 +134,7 @@ type
     property ColHdrFont: TFont read GetColHdrFont write SetColHdrFont;
     property CellEditor: TCellEditor read GetCellEditor write SetCellEditor;
   public
-    constructor Create(AOwner: TComponent; Designer: IFormDesigner);
+    constructor Create(AOwner: TComponent; Designer: IFormDesigner); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} 
     property Columns: TXStringColumns read FColumns write SetColumns;
   end;
 
@@ -124,7 +143,8 @@ procedure EditColumns(Cols: TXStringColumns; Designer: IFormDesigner);
 
 implementation
 
-uses TypInfo, about;
+uses
+  TypInfo, about;
 
 {$R *.DFM}
 
@@ -170,8 +190,13 @@ end;
 // TXStringColumnsEditor
 //
 
+{$IFDEF EDITPROPERTY_CHANGED}
+procedure TXStringColumnsEditor.EditProperty(const PropertyEditor: IProperty;
+  var Continue: Boolean);
+{$ELSE}
 procedure TXStringColumnsEditor.EditProperty(PropertyEditor: TPropertyEditor;
   var Continue, FreeEditor: Boolean);
+{$ENDIF}
 var
   PropName: string;
 begin
@@ -264,6 +289,21 @@ begin
   with LBColumns do
     if ItemIndex >= 0 then
       TXStringColumnItem(items.objects[ItemIndex]).Alignment := Value;
+end;
+
+function TDlgProps.GetHdrAlignment: TAlignment;
+begin
+  result := taLeftJustify;
+  with LBColumns do
+    if ItemIndex >= 0 then
+      result := TXStringColumnItem(items.objects[ItemIndex]).HeaderAlignment;
+end;
+
+procedure TDlgProps.SetHdrAlignment(Value: TAlignment);
+begin
+  with LBColumns do
+    if ItemIndex >= 0 then
+      TXStringColumnItem(items.objects[ItemIndex]).HeaderAlignment := Value;
 end;
 
 function TDlgProps.GetColWidth: integer;
@@ -371,6 +411,11 @@ begin
     taCenter:        CBAlignment.ItemIndex := 1;
     taRightJustify:  CBAlignment.ItemIndex := 2;
   end;
+  case HdrAlignment of
+    taLeftJustify:   CBHdrAlignment.ItemIndex := 0;
+    taCenter:        CBHdrAlignment.ItemIndex := 1;
+    taRightJustify:  CBHdrAlignment.ItemIndex := 2;
+  end;
   CBColor.Selection := ColColor;
   CBHdrColor.Selection := ColHdrColor;
   BtnFont.Font := ColFont;
@@ -471,6 +516,15 @@ begin
     0:  Aligmnent := taLeftJustify;
     1:  Aligmnent := taCenter;
     2:  Aligmnent := taRightJustify;
+  end;
+end;
+
+procedure TDlgProps.CBHdrAlignmentChange(Sender: TObject);
+begin
+  case CBHdrAlignment.ItemIndex of
+    0:  HdrAlignment := taLeftJustify;
+    1:  HdrAlignment := taCenter;
+    2:  HdrAlignment := taRightJustify;
   end;
 end;
 

@@ -16,25 +16,32 @@
               12.08.99md  v2.0  Release v2.0
               17.10.99md  v2.0  Fixed problem with Glyph property
               17.10.99md  v2.0  Fixed problem OnClick event
+              16.08.01md  v2.5  Release 2.5
   ------------------------------------------------------------------------------
 }
+
+{$I VERSIONS.INC}
 unit CEButton;
 
 interface
-uses windows, graphics, messages, classes, Controls, buttons, XStringGrid;
+uses
+  windows, graphics, messages, classes, Controls, buttons, XStringGrid;
 
 type
   TButtonInplace = class(TBitBtn)
   private
     FCellEditor: TCellEditor;
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
     procedure KeyPress(var Key: Char); override;
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;
   end;
 
   TAlignMode = (amAbsolute, amRelative);
@@ -96,7 +103,8 @@ type
 procedure Register;
 
 implementation
-uses grids;
+uses
+  grids;
 
 procedure Register;
 begin
@@ -287,7 +295,7 @@ end;
 procedure TButtonCellEditor.Draw(Rect: TRect);
 begin
   if FEditor = nil then
-    exit;
+    init;
 
   TButtonInplace(FEditor).NumGlyphs := FNumGlyphs;
 
@@ -323,6 +331,13 @@ begin
 end;
 
 // -- TButtonInplace -------------------------------------------------------
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TButtonInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
 
 procedure TButtonInplace.KeyDown(var Key: Word; Shift: TShiftState);
 var
@@ -387,5 +402,6 @@ begin
   visible := false;
   TabStop := false;
 end;
+
 
 end.

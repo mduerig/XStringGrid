@@ -34,14 +34,30 @@
               22.10.99md  v2.0 Fixed cell clearing problem with goTabs
               22.10.99md  v2.0 OnSelectCell triggers now when clicking a cell
               23.12.99md  v2.0 Fixed ugly bug in CompareProc and SwapProc
+              26.11.2k md v2.1 Included new features from Marcus Wirth
+              03.12.2k md v2.1 Fixed bug which caused wrong content in OnSelectCell
+              10.08.01md  v2.5 ImmediateEditMode added. Thanx to Ahmet Semiz
+              10.08.01md  v2.5 Added Elipsis button to TEditCellEditor. Thanx to
+                               Mitja for the idea.
+              10.08.01md  v2.5 Ctl3D property is now published. Thanx to Mitja
+              10.08.01md  v2.5 Added properties FixedLineColor and
+                               GridLineColor. Thanx to Mitja.
+              12.08.01md  v2.5 Fixed problem when grid used in a frame.
+                               Thanks to Andreas Schmidt
+              13.08.01md  v2.5 Fixed problem with aligning the grid
+              16.08.01md  v2.5 Fixed problem with editors in apperaing fixed rows
+              16.08.01md  v2.5 Release 2.5
 ------------------------------------------------------------------------------
 }
+
+{$I VERSIONS.INC}
 unit XStringGrid;
 
 interface
 
-uses Grids, Classes, Graphics, Controls, Windows, StdCtrls, SysUtils, Messages, Mask,
-  ComCtrls;
+uses
+  Grids, Classes, Graphics, Controls, Windows, StdCtrls, SysUtils, Messages,
+  Mask, Dialogs, ComCtrls, Buttons;
 
 type
   ECellEditorError = class(Exception);
@@ -124,10 +140,22 @@ type
     property Editor: TWinControlInterface read GetEditor;
   end;
 
+
+  TInplaceSpeedButton = class(TSpeedButton)
+{$IFDEF REQUESTALIGN_FIXED}
+  protected
+    procedure RequestAlign; override; 
+{$ENDIF}
+  end;
+
   TEditInplace = class(TCustomEdit)
   private
     FCellEditor: TCellEditor;
+    FButton: TSpeedButton;
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure CreateParams(var Params: TCreateParams); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
@@ -135,24 +163,42 @@ type
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;
+    destructor Destroy; override;
+    property Button: TSpeedButton read FButton;
   end;
 
   TEditCellEditor = class(TMetaCellEditor)
+  private
+    FhasElipsis: boolean;
+    FOnElipsisClick: TNotifyEvent;
+    FElipsisCaption: string;
+    function getElipsisCaption: string;
+    function getOnElipsisClick: TNotifyEvent;
+    procedure setElipsisCaption(const Value: string);
+    procedure setOnElipsisClick(const Value: TNotifyEvent);
   protected
+    procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     function InitEditor(AOwner: TComponent): TWinControl; override;
   public
     procedure StartEdit; override;
     procedure EndEdit; override;
+    procedure Clear; override;
     procedure Draw(Rect: TRect); override;
   published
     property DefaultText;
+    property hasElipsis: boolean read FhasElipsis write FhasElipsis;
+    property OnElipsisClick: TNotifyEvent read getOnElipsisClick write setOnElipsisClick;
+    property ElipsisCaption: string read getElipsisCaption write setElipsisCaption;
   end;
 
   TComboInplace = class(TCustomComboBox)
   private
     FCellEditor: TCellEditor;
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure CreateParams(var Params: TCreateParams); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
@@ -160,30 +206,36 @@ type
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;
   end;
 
   TComboCellEditor = class(TMetaCellEditor)
   private
     FStyle: TComboBoxStyle;
+    FItems: TStrings;
   protected
     function InitEditor(AOwner: TComponent): TWinControl; override;
-    function GetItems: TStrings;
+    procedure SetItems(Value: TStrings);
     function GetStyle: TComboBoxStyle; virtual;
     procedure SetStyle(Value: TComboBoxStyle); virtual;
   public
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
     procedure StartEdit; override;
     procedure EndEdit; override;
-    property Items: TStrings read GetItems;
   published
     property DefaultText;
     property Style: TComboBoxStyle read GetStyle write SetStyle default csDropDown;
+    property Items: TStrings read FItems write SetItems;
   end;
 
   TMaskEditInplace = class(TCustomMaskEdit)
   private
     FCellEditor: TCellEditor;
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure CreateParams(var Params: TCreateParams); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
@@ -191,7 +243,7 @@ type
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} virtual;
   end;
 
   TMaskEditCellEditor = class(TMetaCellEditor)
@@ -210,12 +262,22 @@ type
     property EditMask: String read GetEditMask write SetEditMask;
   end;
 
+  TInplaceUpDown = class(TUpDown)
+  protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
+  end;
+
   TUpDownInplace = class(TCustomEdit)
   private
     FCellEditor: TCellEditor;
     FUpDown: TUpDown;
     procedure UpDownClick(Sender: TObject; Button: TUDBtnType);
   protected
+{$IFDEF REQUESTALIGN_FIXED}
+    procedure RequestAlign; override;
+{$ENDIF}
     procedure CreateParams(var Params: TCreateParams); override;
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
     procedure WMGetDlgCode(var Message: TWMGetDlgCode); message WM_GETDLGCODE;
@@ -223,7 +285,7 @@ type
     procedure DoExit; override;
     procedure CreateWnd; override;
   public
-    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); virtual;
+    constructor Create(AOwner: TComponent; CellEditor: TCellEditor); {$IFDEF HAS_REINTRODUCE} reintroduce;  {$ENDIF} virtual;
     destructor Destroy; override;
     property UpDown: TUpDown read FUpDown;
   end;
@@ -250,8 +312,8 @@ type
     procedure Clear; override;
   published
     property DefaultText;
-    property Min: Smallint read getMin write setMin;
-    property Max: Smallint read getMax write setMax;
+    property Min: Smallint read getMin write setMin default 0;
+    property Max: Smallint read getMax write setMax default 10;
     property Increment: integer read getIncrement write setIncrement default 1;
   end;
 
@@ -259,12 +321,14 @@ type
   private
     FHeaderColor: TColor;
     FHeaderFont: TFont;
+    FHeaderAlignment: TAlignment;
     FColor: TColor;
     FFont: TFont;
     FAlignment: TAlignment;
     FEditor: TCellEditor;
     procedure SetHeaderColor(Value: TColor);
     procedure SetHeaderFont(Value: TFont);
+    procedure SetHeaderAlignment(Value: TAlignment);
     procedure SetCaption(Value: String);
     function GetCaption: String;
     procedure SetColor(Value: TColor);
@@ -277,11 +341,13 @@ type
   public
     constructor Create(XStringColumns: TCollection); override;
     destructor Destroy; override;
+    procedure Assign(Source: TPersistent); override;
     procedure ShowEditor(ARow: integer); virtual;
     property Grid: TXStringGrid read GetGrid;
   published
     property HeaderColor: TColor read FHeaderColor write SetHeaderColor default clBtnFace;
     property HeaderFont: TFont read FHeaderFont write SetHeaderFont;
+    property HeaderAlignment:TAlignment read FHeaderAlignment write SetHeaderAlignment default taLeftJustify;
     property Caption: String read GetCaption write SetCaption;
     property Color: TColor read FColor write SetColor default clWindow;
     property Width: integer read GetWidth write SetWidth default 64;
@@ -295,11 +361,13 @@ type
     FOwner: TXStringgrid;
     function GetItem(Index: Integer): TXStringColumnItem;
     procedure SetItem(Index: Integer; Value: TXStringColumnItem);
+  protected
+    function GetOwner: TPersistent; override;
   public
     constructor Create(AOwner: TXStringGrid);
     destructor Destroy; override;
+    function Owner: TXStringgrid;
     property Items[Index: Integer]: TXStringColumnItem read GetItem write SetItem; default;
-    property Owner: TXStringgrid read FOwner;
   end;
 
   TDrawEditorEvent = procedure (Sender: TObject; ACol, ARow: Longint; Editor: TCellEditor) of object;
@@ -308,14 +376,20 @@ type
 
   TXStringGrid = class(TStringgrid)
   private
+    FLastChar: integer;
     FEditCol: integer;
     FEditRow: integer;
     FMultiLine: boolean;
     FCellEditor: TCellEditor;
     FColumns: TXStringColumns;
     FOnDrawEditor: TDrawEditorEvent;
+    FFixedLineColor: TColor;
+    FGridLineColor: TColor;
+    FImmediateEditMode: boolean;
     procedure SetColumns(Value: TXStringColumns);
     procedure quickSort(col, bottom, top: integer; compare: TCompareProc; swap: TSwapProc);
+    procedure SetFixedLineColor(const Value: TColor);
+    procedure SetGridLineColor(const Value: TColor);
   protected
     procedure SizeChanged(OldColCount, OldRowCount: Longint); override;
     procedure ColumnMoved(FromIndex, ToIndex: Longint); override;
@@ -324,6 +398,7 @@ type
     function CanEditShow: Boolean; override;
     procedure DrawEditor(ACol, ARow: integer); virtual;
     procedure TopLeftChanged; override;
+    procedure WMChar(var Msg: TWMChar); message WM_CHAR;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure DestroyWnd; override;
   public
@@ -332,17 +407,23 @@ type
     procedure HandleKey(var Key: Word; Shift: TShiftState);
     procedure sort(col: integer; compare: TCompareProc; swap: TSwapProc);
     property CellEditor: TCellEditor read FCellEditor;
+    property LastChar: integer read FLastChar write FLastChar;
   published
+    property Ctl3D;
+    property FixedLineColor: TColor read FFixedLineColor write SetFixedLineColor;
+    property GridLineColor: TColor read FGridLineColor write SetGridLineColor default clSilver;
     property Columns: TXStringColumns read FColumns write SetColumns;
     property OnDrawEditor: TDrawEditorEvent read FOnDrawEditor write FOnDrawEditor;
     property MultiLine: boolean read FMultiLine write FMultiLine;
+    property ImmediateEditMode: boolean read FImmediateEditMode write FImmediateEditMode;
   end;
 
   function CompareProc(Sender: TXStringGrid; SortCol, row1, row2: integer): Integer;
   procedure SwapProc(Sender: TXStringGrid; SortCol, row1, row2: integer);
 
 implementation
-uses Forms;
+uses
+  Forms;
 
 type
   TWinControlCracker = class(TWinControl);
@@ -384,7 +465,7 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// private TXStringColumnItem
+// TXStringColumnItem
 //
 
 procedure TXStringColumnItem.SetHeaderColor(Value: TColor);
@@ -397,6 +478,14 @@ procedure TXStringColumnItem.SetHeaderFont(Value: TFont);
 begin
   FHeaderFont.assign(Value);
   Grid.InvalidateCol(Index);
+end;
+
+procedure TXStringColumnItem.SetHeaderAlignment(Value: TAlignment);
+begin
+  if FHeaderAlignment <> Value then begin
+    FHeaderAlignment := Value;
+    Grid.InvalidateCol(Index);
+  end;
 end;
 
 procedure TXStringColumnItem.SetCaption(Value: String);
@@ -457,16 +546,13 @@ begin
   result := TXStringColumns(Collection).Owner;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// public TXStringColumnItem
-//
-
 constructor TXStringColumnItem.Create(XStringColumns: TCollection);
 begin
   inherited Create(XStringColumns);
   FHeaderColor := Grid.FixedColor;
   FHeaderFont := TFont.Create;
   FHeaderFont.assign(Grid.Font);
+  FHeaderAlignment := taLeftJustify;
   FColor := Grid.Color;
   FFont := TFont.Create;
   FFont.assign(Grid.Font);
@@ -480,6 +566,42 @@ begin
   FFont.free;
   FHeaderFont.free;
   inherited Destroy;
+end;
+
+procedure TXStringColumnItem.Assign(Source: TPersistent);
+
+  function FindEditor(const Container: TControl; const Editor: TCellEditor): TCellEditor;
+  begin
+    if (Editor = nil) or (Container = nil) then
+      result := nil
+    else begin
+      result := TCellEditor(Container.FindComponent(Editor.Name));
+      if result = nil then
+        result := FindEditor(Container.Parent, Editor);
+    end;
+  end;
+
+begin
+  if Source is TXStringColumnItem then begin
+    HeaderColor := TXStringColumnItem(Source).HeaderColor;
+    HeaderFont.Assign(TXStringColumnItem(Source).HeaderFont);
+    Color := TXStringColumnItem(Source).Color;
+    Font.Assign(TXStringColumnItem(Source).Font);
+    Alignment := TXStringColumnItem(Source).Alignment;
+    HeaderAlignment := TXStringColumnItem(Source).HeaderAlignment;
+    Caption := TXStringColumnItem(Source).Caption;
+
+    // Editors cannot be shared between grids. So no assignement
+    // at run time. This is called at design time when working with
+    // frames. Delphi provides a unique Editor in the target frame
+    // so we have to find this one for the assignment.
+    if not(csDesigning in Grid.ComponentState) then
+      Editor := nil
+    else
+      Editor := FindEditor(Grid.Parent, TXStringColumnItem(Source).Editor);
+
+  end
+  else inherited Assign(Source);
 end;
 
 procedure TXStringColumnItem.ShowEditor(ARow: integer);
@@ -506,7 +628,7 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TXStringColumns private
+// TXStringColumns
 //
 
 function TXStringColumns.GetItem(Index: Integer): TXStringColumnItem;
@@ -519,9 +641,10 @@ begin
   inherited SetItem(Index, Value);
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TXStringColumns public
-//
+function TXStringColumns.GetOwner: TPersistent;
+begin
+  result := FOwner;
+end;
 
 constructor TXStringColumns.Create(AOwner: TXStringgrid);
 begin
@@ -534,8 +657,13 @@ begin
   inherited Destroy;
 end;
 
+function TXStringColumns.Owner: TXStringgrid;
+begin
+  result := FOwner;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
-// TXStringgrid private
+// TXStringgrid
 //
 
 procedure TXStringgrid.SetColumns(Value: TXStringColumns);
@@ -575,10 +703,6 @@ begin
   if up < top then
     quickSort(col, up, top, compare, swap);
 end;
-
-////////////////////////////////////////////////////////////////////////////////
-// TXStringgrid protected
-//
 
 procedure TXStringgrid.SizeChanged(OldColCount, OldRowCount: Longint);
 var
@@ -634,6 +758,7 @@ procedure TXStringgrid.DrawCell(ACol, ARow: Longint; ARect: TRect;
 
 var
   Column: TXStringColumnItem;
+  i: integer;
 begin
   if DefaultDrawing then begin
     Column := Columns[ACol];
@@ -650,8 +775,24 @@ begin
       Canvas.Font.Color := clHighlightText;
     end;
     DefaultDrawing := false;
-    DrawCellText(Column.Alignment);
+    if ARow < FixedRows
+      then DrawCellText(Column.HeaderAlignment)
+      else DrawCellText(Column.Alignment);
     inherited DrawCell(ACol, ARow, ARect, AState);
+    if gdFixed in AState then begin
+      Canvas.Brush.Color := FFixedLineColor;
+      for i:=1 to GridLineWidth do begin
+        InflateRect(ARect,1,1);
+        Canvas.FrameRect(ARect);
+      end;
+    end
+    else begin
+      Canvas.Brush.Color := FGridLineColor;
+      for i:=1 to GridLineWidth do begin
+        InflateRect(ARect,1,1);
+        Canvas.FrameRect(ARect);
+      end;
+    end;
     DefaultDrawing := true;
   end
   else
@@ -660,7 +801,7 @@ end;
 
 function TXStringgrid.CanEditShow: Boolean;
 begin
-  if inherited CanEditShow and Focused then
+  if inherited CanEditShow and Focused and (Row >= FixedRows) then
     if FColumns[Col].Editor <> nil then begin
       FCellEditor := FColumns[Col].Editor;
       FCellEditor.StartEdit;
@@ -668,6 +809,7 @@ begin
       FEditRow := Row;
       DrawEditor(Col, Row);
     end;
+
   result := false;
 end;
 
@@ -689,15 +831,30 @@ begin
     DrawEditor(Col, Row);
 end;
 
+procedure TXStringGrid.WMChar(var Msg: TWMChar);
+begin
+  if FImmediateEditMode then begin
+    if (goEditing in Options) and (char(Msg.CharCode) in [#32..#255]) then
+      LastChar := Msg.CharCode
+    else
+      LastChar := 0;
+  end;
+
+  inherited;
+end;
+
 procedure TXStringGrid.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
   c, r: LongInt;
   s: TGridRect;
 begin
   MouseToCell(X, Y, c, r);
-  if (goAlwaysShowEditor in Options) and (c >= FixedCols) and
-     (r >= FixedRows) and SelectCell(c, r)
-  then begin
+  if (goAlwaysShowEditor in Options) and (c >= FixedCols) and (r >= FixedRows) then begin
+    if FCellEditor <> nil then
+      FCellEditor.EndEdit;
+  end;
+
+  if SelectCell(c, r) then begin
     if FCellEditor <> nil then
       FCellEditor.Clear;
 
@@ -721,15 +878,24 @@ begin
   inherited DestroyWnd;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TXStringgrid public
-//
+procedure TXStringGrid.SetFixedLineColor(const Value: TColor);
+begin
+  FFixedLineColor := Value;
+  Invalidate;
+end;
+
+procedure TXStringGrid.SetGridLineColor(const Value: TColor);
+begin
+  FGridLineColor := Value;
+  Invalidate;
+end;
 
 constructor TXStringgrid.Create(AOwner: TComponent);
 var
   c: integer;
 begin
   inherited Create(AOwner);
+  FGridLineColor := clSilver;
   FColumns := TXStringColumns.Create(self);
   for c := 0 to ColCount - 1 do
     FColumns.Add;
@@ -818,7 +984,7 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TMetaCellEditor public
+// TMetaCellEditor
 //
 
 procedure TMetaCellEditor.loaded;
@@ -830,7 +996,7 @@ end;
 destructor TMetaCellEditor.Destroy;
 begin
   FEditor.free;            // FEdit propably set to nil by notification
-  inherited Destroy;       // method. So FEdit has been freed allready
+  inherited Destroy;       // method. So FEdit has been freed already
 end;
 
 procedure TMetaCellEditor.init;
@@ -872,10 +1038,6 @@ begin
   Grid.FCellEditor := nil;         // Private fields in same unit are friends,
 end;                               // so I can accss this here
 
-////////////////////////////////////////////////////////////////////////////////
-// TMetaCellEditor protected
-//
-
 procedure TMetaCellEditor.Attatch(AGrid: TXStringGrid);
 begin
   inherited Attatch(AGrid);
@@ -885,6 +1047,7 @@ end;
 
 procedure TMetaCellEditor.Notification(AComponent: TComponent; Operation: TOperation);
 begin
+  inherited Notification(AComponent, Operation);
   if (Operation <> opRemove) or (FEditor = nil) then
     exit;
 
@@ -909,8 +1072,26 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TEditInplace private
+// TInplaceSpeedButton
 //
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TInplaceSpeedButton.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
+
+////////////////////////////////////////////////////////////////////////////////
+// TEditInplace
+//
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TEditInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
 
 procedure TEditInplace.CreateParams(var Params: TCreateParams);
 begin
@@ -975,18 +1156,26 @@ end;
 procedure TEditInplace.CreateWnd;
 begin
   inherited CreateWnd;
-  if FCellEditor.grid <> nil then
+  if FCellEditor.grid <> nil then begin
+    if FButton <> nil then
+      FButton.Parent := FCellEditor.FGrid;
     windows.SetParent(Handle, FCellEditor.grid.Handle);
+  end;
 end;
-
-////////////////////////////////////////////////////////////////////////////////
-// TEditInplace public
-//
 
 constructor TEditInplace.Create(AOwner: TComponent; CellEditor: TCellEditor);
 begin
   inherited Create(AOwner);
   FCellEditor := CellEditor;
+  if TEditCellEditor(FCellEditor).FhasElipsis then begin
+    FButton := TInplaceSpeedButton.Create(AOwner);
+    with FButton do begin
+      visible := false;
+      TabStop := false;
+      OnClick := TEditCellEditor(FCellEditor).FOnElipsisClick;
+      Caption := TEditCellEditor(FCellEditor).FElipsisCaption;
+    end;
+  end;
   visible := false;
   Ctl3d := false;
   BorderStyle := bsNone;
@@ -994,8 +1183,14 @@ begin
   TabStop := False;
 end;
 
+destructor TEditInplace.Destroy;
+begin
+  FButton.free;
+  inherited;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
-// TEditCellEditor public
+// TEditCellEditor
 //
 
 procedure TEditCellEditor.Draw(Rect: TRect);
@@ -1005,20 +1200,91 @@ begin
   if FEditor = nil then
     exit;
 
+  if FhasElipsis then
+    Rect.Right := Rect.Right - Rect.Bottom + Rect.Top;
+
   inherited Draw(Rect);
   with FEditor do begin
     R := Classes.Rect(2, 2, Width - 2, Height);
     SendMessage(Handle, EM_SETRECTNP, 0, LongInt(@R));
   end;
+
+  if FhasElipsis then
+    with TEditInplace(FEditor) do begin
+      Button.left := Rect.right;
+      Button.top := Rect.Top;
+      Button.height := Rect.bottom - Rect.Top;
+      Button.width := Rect.bottom - Rect.Top;
+      Button.visible := true;
+    end;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TEditCellEditor protected
-//
+procedure TEditCellEditor.Clear;
+begin
+  inherited Clear;
+  if FhasElipsis then
+    TEditInplace(FEditor).Button.visible := false;
+end;
+
+function TEditCellEditor.getElipsisCaption: string;
+begin
+  if FEditor = nil then
+    result := FElipsisCaption
+  else
+    result := TEditInplace(FEditor).Button.Caption;
+end;
+
+procedure TEditCellEditor.setElipsisCaption(const Value: string);
+begin
+  if FEditor = nil then
+    FElipsisCaption := Value
+  else
+    TEditInplace(FEditor).Button.Caption := Value;
+end;
+
+function TEditCellEditor.getOnElipsisClick: TNotifyEvent;
+begin
+  if FEditor = nil then
+    result := FOnElipsisClick
+  else
+    result := TEditInplace(FEditor).Button.OnClick;
+end;
+
+procedure TEditCellEditor.setOnElipsisClick(const Value: TNotifyEvent);
+begin
+  if FEditor = nil then
+    FOnElipsisClick := Value
+  else
+    TEditInplace(FEditor).Button.OnClick := Value;
+end;
+
+procedure TEditCellEditor.Notification(AComponent: TComponent; Operation: TOperation);
+begin
+  inherited Notification(AComponent, Operation);
+
+  if (Operation <> opRemove) or (FEditor = nil) then
+    exit;
+
+  if AComponent = TEditInplace(FEditor).Button then
+    TEditInplace(FEditor).FButton := nil;
+end;
 
 function TEditCellEditor.InitEditor(AOwner: TComponent): TWinControl;
+var
+  Inplace: TEditInplace;
 begin
-  result := TEditInplace.Create(AOwner, self);
+  Inplace := TEditInplace.Create(AOwner, self);
+  result := Inplace;
+
+  if FhasElipsis then
+    try
+      if Inplace = nil then
+        raise ECellEditorError.Create(StrCellEditorError);
+       Inplace.FreeNotification(self);  // Notify me if FButton gets freed by someone
+      (AOwner as TWinControl).InsertControl(Inplace.Button);
+    except
+      raise ECellEditorError.Create(StrCellEditorError);
+    end;
 end;
 
 procedure TEditCellEditor.StartEdit;
@@ -1026,17 +1292,25 @@ var
   s: string;
 begin
   if (FEditor = nil) or (Grid = nil) then
-    exit;
+    init;
 
   with FEditor as TEditInplace do begin
-    s := Grid.GetEditText(Grid.Col, Grid.Row);
-    if s = '' then
-      Text := FDefaultText
-    else
-      Text := s;
+    if Grid.LastChar <> 0 then begin
+      Text := char(Grid.LastChar);
+      Grid.LastChar := 0;
+      SelStart := 1;
+      SelLength := 0;
+    end
+    else begin
+      s := Grid.GetEditText(Grid.Col, Grid.Row);
+      if s = '' then
+        Text := FDefaultText
+      else
+        Text := s;
 
-    SelStart := 0;
-    SelLength := -1;
+      SelStart := 0;
+      SelLength := -1;
+    end;
   end;
 end;
 
@@ -1049,8 +1323,15 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TComboInplace protected
+// TComboInplace
 //
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TComboInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
 
 procedure TComboInplace.CreateParams(var Params: TCreateParams);
 begin
@@ -1118,38 +1399,53 @@ begin
     windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TComboInplace public
-//
-
 constructor TComboInplace.Create(AOwner: TComponent; CellEditor: TCellEditor);
 begin
   inherited Create(AOwner);
   FCellEditor := CellEditor;
-  visible := false;
+  Visible := false;
   Ctl3d := false;
   ParentCtl3D := False;
   TabStop := False;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TComboCellEditor protected
+// TComboCellEditor
 //
+
+constructor TComboCellEditor.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FItems := TStringList.Create;
+end;
+
+destructor TComboCellEditor.Destroy;
+begin
+  FItems.Free;
+  inherited Destroy;
+end;
 
 procedure TComboCellEditor.StartEdit;
 begin
   if (FEditor = nil) or (Grid = nil) then
-    exit;
+    init;
 
   with FEditor as TComboInplace do begin
-    case Style of
-      csDropDown:
-        text := Grid.GetEditText(Grid.Col, Grid.Row);
-      csDropDownList:
-        itemindex := Items.IndexOf(Grid.GetEditText(Grid.Col, Grid.Row));
+    Items.Assign(FItems);
+    if Grid.LastChar <> 0 then begin
+      PostMessage(Handle, WM_KEYDOWN, integer(upcase(char(Grid.LastChar))), 0);
+      Grid.LastChar := 0;
+    end
+    else begin
+      case Style of
+        csDropDown:
+          text := Grid.GetEditText(Grid.Col, Grid.Row);
+        csDropDownList:
+          itemindex := Items.IndexOf(Grid.GetEditText(Grid.Col, Grid.Row));
+      end;
+      if Text = '' then
+        Text := FDefaultText;
     end;
-    if Text = '' then
-      Text := FDefaultText;
   end;
 end;
 
@@ -1167,9 +1463,11 @@ begin
   TComboInplace(result).Style := FStyle;
 end;
 
-function TComboCellEditor.GetItems: TStrings;
+procedure TComboCellEditor.SetItems(Value: TStrings);
 begin
-  result :=  (FEditor as TComboInplace).Items;
+  FItems.Assign(Value);
+  if FEditor <> nil
+    then TComboInplace(FEditor).Items.Assign(Value);
 end;
 
 function TComboCellEditor.GetStyle: TComboBoxStyle;
@@ -1189,8 +1487,15 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TMaskEditInplace private
+// TMaskEditInplace
 //
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TMaskEditInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
 
 procedure TMaskEditInplace.CreateParams(var Params: TCreateParams);
 begin
@@ -1255,10 +1560,6 @@ begin
     windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TMaskEditInplace public
-//
-
 constructor TMaskEditInplace.Create(AOwner: TComponent; CellEditor: TCellEditor);
 begin
   inherited Create(AOwner);
@@ -1271,7 +1572,7 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TMaskEditCellEditor private
+// TMaskEditCellEditor
 //
 
 function TMaskEditCellEditor.GetEditMask: String;
@@ -1290,10 +1591,6 @@ begin
     TMaskEditInplace(FEditor).EditMask := Value;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TMaskEditCellEditor public
-//
-
 procedure TMaskEditCellEditor.Draw(Rect: TRect);
 begin
   if FEditor = nil then
@@ -1306,10 +1603,6 @@ begin
   inherited Draw(Rect);
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TMaskEditCellEditor protected
-//
-
 function TMaskEditCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 begin
   result := TMaskEditInplace.Create(AOwner, self);
@@ -1321,14 +1614,20 @@ var
   s: string;
 begin
   if (FEditor = nil) or (Grid = nil) then
-    exit;
+    init;
 
   with FEditor as TMaskEditInplace do begin
-    s := Grid.GetEditText(Grid.Col, Grid.Row);
-    if s = '' then
-      Text := FDefaultText
-    else
-      Text := s;
+    if Grid.LastChar <> 0 then begin
+      Text := char(Grid.LastChar);
+      Grid.LastChar := 0;
+    end
+    else begin
+      s := Grid.GetEditText(Grid.Col, Grid.Row);
+      if s = '' then
+        Text := FDefaultText
+      else
+        Text := s;
+    end;
   end;
 end;
 
@@ -1341,7 +1640,18 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TUpDownInplace private
+// TInplaceUpDown
+//
+
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TInplaceUpDown.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
+
+////////////////////////////////////////////////////////////////////////////////
+// TUpDownInplace
 //
 
 procedure TUpDownInplace.UpDownClick(Sender: TObject; Button: TUDBtnType);
@@ -1359,9 +1669,17 @@ begin
   Text := IntToStr(c);
 end;
 
+{$IFDEF REQUESTALIGN_FIXED}
+procedure TUpDownInplace.RequestAlign;
+begin
+// Empty. Don't call inherited this disallows alignment
+end;
+{$ENDIF}
+
 procedure TUpDownInplace.CreateParams(var Params: TCreateParams);
 begin
   inherited CreateParams(Params);
+  Params.Style := Params.Style or ES_MULTILINE;
 end;
 
 procedure TUpDownInplace.KeyDown(var Key: Word; Shift: TShiftState);
@@ -1435,14 +1753,10 @@ begin
   end;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TUpDownInplace public
-//
-
 constructor TUpDownInplace.Create(AOwner: TComponent; CellEditor: TCellEditor);
 begin
   inherited Create(AOwner);
-  FUpDown := TUpDown.Create(AOwner);
+  FUpDown := TInplaceUpDown.Create(AOwner);
   with FUpDown do begin
     visible := false;
     TabStop := false;
@@ -1466,13 +1780,14 @@ begin
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// TUpDownCellEditor public
+// TUpDownCellEditor
 //
 
 constructor TUpDownCellEditor.create(AOwner: TComponent);
 begin
   inherited create(AOwner);
   FIncrement := 1;
+  FMax := 10;
 end;
 
 procedure TUpDownCellEditor.Draw(Rect: TRect);
@@ -1500,10 +1815,6 @@ begin
   TUpDownInplace(FEditor).UpDown.visible := false;
 end;
 
-////////////////////////////////////////////////////////////////////////////////
-// TUpDownCellEditor protected
-//
-
 function TUpDownCellEditor.InitEditor(AOwner: TComponent): TWinControl;
 var
   Inplace: TUpDownInplace;
@@ -1525,12 +1836,23 @@ end;
 procedure TUpDownCellEditor.StartEdit;
 begin
   if (FEditor = nil) or (Grid = nil) then
-    exit;
+    init;
 
   with FEditor as TUpDownInplace do begin
-    Text := Grid.GetEditText(Grid.Col, Grid.Row);
-    if Text = '' then
-      Text := FDefaultText;
+    if Grid.LastChar <> 0 then begin
+      Text := char(Grid.LastChar);
+      Grid.LastChar := 0;
+      SelStart := 1;
+      SelLength := 0;
+    end
+    else begin
+      Text := Grid.GetEditText(Grid.Col, Grid.Row);
+      if Text = '' then
+        Text := FDefaultText;
+
+      SelStart := 0;
+      SelLength := -1;
+    end;
     try
       TUpDownInplace(FEditor).UpDown.Position := StrToInt(Text);
     except
@@ -1606,4 +1928,6 @@ begin
     result := TUpDownInplace(FEditor).FUpDown.Increment;
 end;
 
+
 end.
+

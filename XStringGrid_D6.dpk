@@ -1,9 +1,9 @@
-package XStringGrid_D4;
+package XStringGrid_D6;
 
-{$R *.RES}
+{$R *.res}
 {$R 'XStringGridRegister.dcr'}
 {$R 'colorcombo.dcr'}
-{$ALIGN ON}
+{$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
 {$DEBUGINFO ON}
@@ -23,15 +23,16 @@ package XStringGrid_D4;
 {$VARSTRINGCHECKS ON}
 {$WRITEABLECONST ON}
 {$MINENUMSIZE 1}
-{$IMAGEBASE $00400000}
+{$IMAGEBASE $400000}
 {$DESCRIPTION 'Extended String Grid Components'}
 {$DESIGNONLY}
 {$IMPLICITBUILD ON}
 
 requires
-  vcl40,
-  vcldb40,
-  vclx40;
+  vcl,
+  vcldb,
+  vclx,
+  designide;
 
 contains
   XStringGridRegister in 'XStringGridRegister.pas',

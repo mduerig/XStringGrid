@@ -13,16 +13,25 @@
     History:  12.08.99md  v1.0 Creation
   ------------------------------------------------------------------------------
 }
+
+{$I VERSIONS.INC}
 unit CEFormRegister;
 
 interface
-uses classes, dsgnintf, Exptintf;
+uses
+  classes, Exptintf,
+{$IFNDEF D6UP}
+  DsgnIntf;
+{$ELSE}
+  DesignEditors, DesignIntf;
+{$ENDIF}
+
 
 type
   TFormClassEditorProperty = class(TStringProperty)
   private
     cbEnumForm: TGetStrProc;
-  protected
+  public
     procedure GetValues(Proc: TGetStrProc); override;
     function GetAttributes: TPropertyAttributes; override;
   end;
@@ -30,7 +39,8 @@ type
   procedure Register;
 
 implementation
-uses CEForm;
+uses
+  CEForm;
 
 procedure Register;
 begin
