@@ -17,6 +17,9 @@
               26.11.2k md v2.1 Included new features from Marcus Wirth
               10.08.01md  v2.5 ImmediateEditMode added. Thanx to Ahmet Semiz
               16.08.01md  v2.5 Release 2.5
+              11.10.03md  v2.7 Fixed bug causing index out of bound exception
+                               when accessing the Checked property of a
+                               dynamically added item. Thanks to Marcus Lipke
   ------------------------------------------------------------------------------
 }
 
@@ -65,6 +68,7 @@ type
   protected
     function InitEditor(AOwner: TComponent): TWinControl; override;
     procedure SetItems(Value: TStrings);
+    function GetItems: TStrings;
     function getChecked(Index: integer): boolean;
     procedure setChecked(Index: integer; Value: boolean);
   public
@@ -81,7 +85,7 @@ type
     property OnSetChecks: TSetChecksEvent read FOnSetChecks write FOnSetChecks;
     property OnSetText: TSetTextEvent read FOnSetText write FOnSetText;
     property Columns: integer read getColumns write setColumns;
-    property Items: TStrings read FItems write SetItems;
+    property Items: TStrings read GetItems write SetItems;
   end;
 
 procedure Register;
@@ -132,7 +136,6 @@ begin
     init;
 
   with FEditor as TCheckListInplace do begin
-    Items.Assign(FItems);
     if Grid.LastChar <> 0 then
       PostMessage(Handle, WM_KEYDOWN, integer(upcase(char(Grid.LastChar))), 0);
 
@@ -170,11 +173,20 @@ begin
   (FEditor as TCheckListInplace).checked[Index] := Value;
 end;
 
+function TCheckListCellEditor.GetItems: TStrings;
+begin
+  if (FEditor <> nil) and FEditor.HandleAllocated then
+    result := (FEditor as TCheckListInplace).Items
+  else
+    result := FItems;
+end;
+
 procedure TCheckListCellEditor.SetItems(Value: TStrings);
 begin
-  FItems.Assign(Value);
-  if FEditor <> nil
-    then (FEditor as TCheckListInplace).Items.Assign(Value);
+  if (FEditor <> nil) and FEditor.HandleAllocated then
+    (FEditor as TCheckListInplace).Items.Assign(Value)
+  else
+    FItems.Assign(Value);
 end;
 
 procedure TCheckListCellEditor.Draw(Rect: TRect);
@@ -297,6 +309,7 @@ end;
 procedure TCheckListInplace.CreateWnd;
 begin
   inherited CreateWnd;
+  Items.Assign(TCheckListCellEditor(FCellEditor).FItems);
   if FCellEditor.grid <> nil then
     windows.SetParent(Handle, FCellEditor.grid.Handle);
 end;
