@@ -30,7 +30,6 @@ package XStringGrid_D6;
 
 requires
   vcl,
-  vcldb,
   vclx,
   designide;
 

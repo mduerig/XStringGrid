@@ -1,3 +1,10 @@
+{$IFDEF VER150}
+  {$IFDEF BCB}
+  {$ELSE}
+    {$DEFINE D7}
+    {$DEFINE D7UP}
+  {$ENDIF}
+{$ENDIF}
 {$IFDEF VER140}
   {$IFDEF BCB}
     {$DEFINE BCB6}
@@ -37,6 +44,9 @@
   {$DEFINE D3UP}
 {$ENDIF}
 
+{$IFDEF D7UP}
+  {$DEFINE D6UP}
+{$ENDIF}
 {$IFDEF D6UP}
   {$DEFINE D5UP}
 {$ENDIF}

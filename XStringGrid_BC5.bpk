@@ -13,8 +13,8 @@
     <RESDEPEN value="$(RESFILES) about.dfm"/>
     <LIBFILES value=""/>
     <LIBRARIES value=""/>
-    <SPARELIBS value="vcl50.lib vcldb50.lib vclbde50.lib vclx50.lib"/>
-    <PACKAGES value="vclx50.bpi vcl50.bpi vcldb50.bpi vclbde50.bpi"/>
+    <SPARELIBS value="vcl50.lib vclx50.lib"/>
+    <PACKAGES value="vclx50.bpi vcl50.bpi"/>
     <PATHCPP value=".;"/>
     <PATHPAS value=".;"/>
     <PATHRC value=".;"/>

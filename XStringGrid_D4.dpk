@@ -30,7 +30,6 @@ package XStringGrid_D4;
 
 requires
   vcl40,
-  vcldb40,
   vclx40;
 
 contains
@@ -41,7 +40,6 @@ contains
   CEForm in 'CEForm.pas',
   CEFormRegister in 'CEFormRegister.pas',
   CEButton in 'CEButton.pas',
-  colorcombo in 'colorcombo.pas',
-  CECheckbox in 'CECheckbox.pas';
+  colorcombo in 'colorcombo.pas';
 
 end.

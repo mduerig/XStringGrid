@@ -14,8 +14,6 @@ USEUNIT("XStringGrid.pas");
 USEFORMNS("about.pas", About, AboutBox);
 USEPACKAGE("vclx50.bpi");
 USEPACKAGE("vcl50.bpi");
-USEPACKAGE("vcldb50.bpi");
-USEPACKAGE("vclbde50.bpi");
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 //---------------------------------------------------------------------------

@@ -10,13 +10,12 @@
               CH-3000 Bern
               mduerig@eye.ch / http://www.eye.ch/~mduerig
   ------------------------------------------------------------------------------
-    History:  09.04.02md  v1.0 Creation
+    History:  09.04.02md  v2.6 Creation
   ------------------------------------------------------------------------------
 }
 
 {$I VERSIONS.INC}
 unit CECheckbox;
-{todo -ctest : Test this compo with other compilers (D6, BCB6 ok)}
 
 interface
 uses

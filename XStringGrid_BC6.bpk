@@ -14,7 +14,7 @@
     <LIBFILES value=""/>
     <LIBRARIES value=""/>
     <SPARELIBS value="rtl.lib"/>
-    <PACKAGES value="rtl.bpi designide.bpi vcl.bpi vcldb.bpi dbrtl.bpi vclx.bpi bcbsmp.bpi 
+    <PACKAGES value="rtl.bpi designide.bpi vcl.bpi vclx.bpi bcbsmp.bpi 
       bcbie.bpi"/>
     <PATHCPP value=".;"/>
     <PATHPAS value=".;"/>
@@ -58,8 +58,6 @@
       <FILE FILENAME="vcl.bpi" FORMNAME="" UNITNAME="vcl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="XStringGridRegister.pas" FORMNAME="DlgProps" UNITNAME="XStringGridRegister" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="XStringGridRegister.dcr" FORMNAME="" UNITNAME="" CONTAINERID="DcrTool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="vcldb.bpi" FORMNAME="" UNITNAME="vcldb" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
-      <FILE FILENAME="dbrtl.bpi" FORMNAME="" UNITNAME="dbrtl" CONTAINERID="BPITool" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="CECheckbox.pas" FORMNAME="" UNITNAME="CECheckbox" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="CECheckList.pas" FORMNAME="" UNITNAME="CECheckList" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>
       <FILE FILENAME="CEFormRegister.pas" FORMNAME="" UNITNAME="CEFormRegister" CONTAINERID="PascalCompiler" DESIGNCLASS="" LOCALCOMMAND=""/>

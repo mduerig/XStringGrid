@@ -47,9 +47,15 @@
               13.08.01md  v2.5 Fixed problem with aligning the grid
               16.08.01md  v2.5 Fixed problem with editors in appearing fixed rows
               16.08.01md  v2.5 Release 2.5
+              29.07.03md  v2.6 New property EditorInheritsCellProps
+              29.07.03md  v2.6 New event OnCellProps
+              29.07.03md  v2.6 New property SelectedColor
+              29.07.03md  v2.6 New property SelectedTextColor
+              29.07.03md  v2.6 New cell editor CECheckbox
+              29.07.03md  v2.6 Workaround for CECheckbox weirdness
+              29.07.03md  v2.6 Release 2.6
 ------------------------------------------------------------------------------
 }
-
 {$I VERSIONS.INC}
 unit XStringGrid;
 
@@ -325,6 +331,7 @@ type
     FColor: TColor;
     FFont: TFont;
     FAlignment: TAlignment;
+    FEditorInheritsCellProps: boolean;
     FEditor: TCellEditor;
     procedure SetHeaderColor(Value: TColor);
     procedure SetHeaderFont(Value: TFont);
@@ -347,13 +354,14 @@ type
   published
     property HeaderColor: TColor read FHeaderColor write SetHeaderColor default clBtnFace;
     property HeaderFont: TFont read FHeaderFont write SetHeaderFont;
-    property HeaderAlignment:TAlignment read FHeaderAlignment write SetHeaderAlignment default taLeftJustify;
+    property HeaderAlignment: TAlignment read FHeaderAlignment write SetHeaderAlignment default taLeftJustify;
     property Caption: String read GetCaption write SetCaption;
     property Color: TColor read FColor write SetColor default clWindow;
     property Width: integer read GetWidth write SetWidth default 64;
     property Font: TFont read FFont write SetFont;
     property Alignment: TAlignment read FAlignment write SetAlignment default taLeftJustify;
     property Editor: TCellEditor read FEditor write SetEditor;
+    property EditorInheritsCellProps: boolean read FEditorInheritsCellProps write FEditorInheritsCellProps;
   end;
 
   TXStringColumns = class(TCollection)
@@ -371,6 +379,7 @@ type
   end;
 
   TDrawEditorEvent = procedure (Sender: TObject; ACol, ARow: Longint; Editor: TCellEditor) of object;
+  TCellPropsEvent = procedure (Sender: TObject; Canvas: TCanvas; var Alignment: TAlignment; var CellText: string; AState: TGridDrawState; Row, Col: integer) of object;
   TCompareProc = function(Sender: TXStringGrid; SortCol, row1, row2: integer): Integer;
   TSwapProc = procedure(Sender: TXStringGrid; SortCol, row1, row2: integer);
 
@@ -383,13 +392,18 @@ type
     FCellEditor: TCellEditor;
     FColumns: TXStringColumns;
     FOnDrawEditor: TDrawEditorEvent;
+    FOnCellProps: TCellPropsEvent;
     FFixedLineColor: TColor;
     FGridLineColor: TColor;
     FImmediateEditMode: boolean;
+    FSelectedTextColor: TColor;
+    FSelectedColor: TColor;
     procedure SetColumns(Value: TXStringColumns);
     procedure quickSort(col, bottom, top: integer; compare: TCompareProc; swap: TSwapProc);
     procedure SetFixedLineColor(const Value: TColor);
     procedure SetGridLineColor(const Value: TColor);
+    procedure SetSelectedColor(const Value: TColor);
+    procedure SetSelectedTextColor(const Value: TColor);
   protected
     procedure SizeChanged(OldColCount, OldRowCount: Longint); override;
     procedure ColumnMoved(FromIndex, ToIndex: Longint); override;
@@ -413,8 +427,11 @@ type
     property Ctl3D;
     property FixedLineColor: TColor read FFixedLineColor write SetFixedLineColor;
     property GridLineColor: TColor read FGridLineColor write SetGridLineColor default clSilver;
+    property SelectedColor: TColor read FSelectedColor write SetSelectedColor default clHighlight;
+    property SelectedTextColor: TColor read FSelectedTextColor write SetSelectedTextColor default clHighlightText;
     property Columns: TXStringColumns read FColumns write SetColumns;
     property OnDrawEditor: TDrawEditorEvent read FOnDrawEditor write FOnDrawEditor;
+    property OnCellProps: TCellPropsEvent read FOnCellProps write FOnCellProps;
     property MultiLine: boolean read FMultiLine write FMultiLine;
     property ImmediateEditMode: boolean read FImmediateEditMode write FImmediateEditMode;
   end;
@@ -622,6 +639,13 @@ begin
     if FEditor <> nil then begin
       Rect := CellRect(Index, ARow);
       AdjustRect;
+
+      if FEditorInheritsCellProps and (FEditor is TMetaCellEditor) then
+        with (FEditor as TMetaCellEditor).Editor do begin
+          Color := FColor;
+          Font := FFont;
+        end;
+
       if not IsRectEmpty(Rect) then
         FEditor.Draw(Rect);
     end;
@@ -728,9 +752,8 @@ end;
 procedure TXStringgrid.DrawCell(ACol, ARow: Longint; ARect: TRect;
   AState: TGridDrawState);
 
-  procedure DrawCellText(Alignment: TAlignment);
+  procedure DrawCellText(Alignment: TAlignment; CellText: string);
   var
-    s: string;
     r: TRect;
     a: integer;
   begin
@@ -752,14 +775,15 @@ procedure TXStringgrid.DrawCell(ACol, ARow: Longint; ARect: TRect;
       a := a or DT_SINGLELINE;
 
     a := a or DT_NOPREFIX;
-    s := Cells[ACol, ARow];
     FillRect(Canvas.Handle, ARect, Canvas.Brush.Handle);
-    DrawText(Canvas.Handle, PChar(s), -1, r, a);
+    DrawText(Canvas.Handle, PChar(CellText), -1, r, a);
   end;
 
 var
   Column: TXStringColumnItem;
   i: integer;
+  Align: TAlignment;
+  CellText: string;
 begin
   if DefaultDrawing then begin
     Column := Columns[ACol];
@@ -771,29 +795,35 @@ begin
       Canvas.Brush.Color := Column.FColor;
       Canvas.Font := Column.FFont;
     end;
+
     if (gdSelected in AState) then begin
-      Canvas.Brush.Color := clHighlight;
-      Canvas.Font.Color := clHighlightText;
+      Canvas.Brush.Color := FSelectedColor;
+      Canvas.Font.Color := FSelectedTextColor;
     end;
+
     DefaultDrawing := false;
-    if ARow < FixedRows
-      then DrawCellText(Column.HeaderAlignment)
-      else DrawCellText(Column.Alignment);
+    if ARow < FixedRows then
+      Align := Column.HeaderAlignment
+    else
+      Align := Column.Alignment;
+
+    CellText := Cells[ACol, ARow];
+    if assigned(FOnCellProps) then
+      FOnCellProps(self, Canvas, Align, CellText, AState, ARow, ACol);
+
+    DrawCellText(Align, CellText);
     inherited DrawCell(ACol, ARow, ARect, AState);
-    if gdFixed in AState then begin
-      Canvas.Brush.Color := FFixedLineColor;
-      for i:=1 to GridLineWidth do begin
-        InflateRect(ARect,1,1);
-        Canvas.FrameRect(ARect);
-      end;
-    end
-    else begin
+
+    if gdFixed in AState then
+      Canvas.Brush.Color := FFixedLineColor
+    else
       Canvas.Brush.Color := FGridLineColor;
-      for i:=1 to GridLineWidth do begin
-        InflateRect(ARect,1,1);
-        Canvas.FrameRect(ARect);
-      end;
+
+    for i:=1 to GridLineWidth do begin
+      InflateRect(ARect,1,1);
+      Canvas.FrameRect(ARect);
     end;
+
     DefaultDrawing := true;
   end
   else
@@ -896,12 +926,26 @@ begin
   Invalidate;
 end;
 
+procedure TXStringGrid.SetSelectedColor(const Value: TColor);
+begin
+  FSelectedColor := Value;
+  Invalidate;
+end;
+
+procedure TXStringGrid.SetSelectedTextColor(const Value: TColor);
+begin
+  FSelectedTextColor := Value;
+  Invalidate;
+end;
+
 constructor TXStringgrid.Create(AOwner: TComponent);
 var
   c: integer;
 begin
   inherited Create(AOwner);
   FGridLineColor := clSilver;
+  FSelectedColor := clHighlight;
+  FSelectedTextColor := clHighlightText;
   FColumns := TXStringColumns.Create(self);
   for c := 0 to ColCount - 1 do
     FColumns.Add;
@@ -936,7 +980,8 @@ end;
 // this 'bug' causes the button not to work as expected.
 // Therefore I'm 'fixing' this for the checkbox only, so everything hopefully works
 // as expected.
-{ TODO : Test (D6, BCB6 ok) }
+{ TODO : This hack is only tested with D6, BCB6 so far }
+{ TODO : Fixme sometimes}
 procedure TXStringGrid.WMCommand(var Message: TWMCommand);
 var
   Control: TWinControl;

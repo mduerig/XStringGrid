@@ -21,8 +21,8 @@ DEFFILE =
 RESDEPEN = $(RESFILES) about.dfm
 LIBFILES =
 LIBRARIES =
-SPARELIBS = VCL35.lib vcldb35.lib vclx35.lib
-PACKAGES = vclx35.bpi VCL35.bpi vcldb35.bpi
+SPARELIBS = VCL35.lib vclx35.lib
+PACKAGES = vclx35.bpi VCL35.bpi 
 # ---------------------------------------------------------------------------
 PATHCPP = .;
 PATHASM = .;

@@ -12,7 +12,6 @@ USEUNIT("CEForm.pas");
 USEUNIT("CEButton.pas");
 USEUNIT("colorcombo.pas");
 USERES("colorcombo.dcr");
-USEPACKAGE("vcldb35.bpi");
 USEUNIT("XStringGrid.pas");
 USEFORMNS("about.pas", About, AboutBox);
 //---------------------------------------------------------------------------

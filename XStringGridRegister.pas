@@ -16,6 +16,7 @@
               12.08.99md  v2.0 Release v2.0
               03.10.99md  v2.0 Components go to separate Palette
               26.11.2k md v2.1 Included new features from Marcus Wirth
+              29.07.03md  v2.6 Added PropertyInheritance property
   ----------------------------------------------------------------------------
 }
 
@@ -26,7 +27,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  XStringGrid, StdCtrls, ComCtrls, colorcombo, Grids, DBGrids,
+  XStringGrid, StdCtrls, ComCtrls, colorcombo, Grids, 
 {$IFNDEF DSGNINTF_GONE}
   DsgnIntf;
 {$ELSE}
@@ -89,6 +90,7 @@ type
     BtnFont: TButton;
     Label5: TLabel;
     CBEditor: TComboBox;
+    cbPropertyInheritance: TCheckBox;
     procedure LBColumnsClick(Sender: TObject);
     procedure TBWidthChange(Sender: TObject);
     procedure EditHeaderExit(Sender: TObject);
@@ -101,6 +103,10 @@ type
     procedure btnAboutClick(Sender: TObject);
     procedure CBAlignmentChange(Sender: TObject);
     procedure CBHdrAlignmentChange(Sender: TObject);
+    procedure cbPropertyInheritanceClick(Sender: TObject);
+  private
+    function GetPropertyInheritance: boolean;
+    procedure SetPropertyInheritance(const Value: boolean);
   private
     FColumns: TXStringColumns;
     FDesigner: IFormDesigner;
@@ -133,8 +139,9 @@ type
     property ColFont: TFont read GetColFont write SetColFont;
     property ColHdrFont: TFont read GetColHdrFont write SetColHdrFont;
     property CellEditor: TCellEditor read GetCellEditor write SetCellEditor;
+    property PropertyInheritance: boolean read GetPropertyInheritance write SetPropertyInheritance;
   public
-    constructor Create(AOwner: TComponent; Designer: IFormDesigner); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF} 
+    constructor Create(AOwner: TComponent; Designer: IFormDesigner); {$IFDEF HAS_REINTRODUCE} reintroduce; {$ENDIF}
     property Columns: TXStringColumns read FColumns write SetColumns;
   end;
 
@@ -396,6 +403,21 @@ begin
       TXStringColumnItem(items.objects[ItemIndex]).Editor := Value;
 end;
 
+function TDlgProps.GetPropertyInheritance: boolean;
+begin
+  result := false;
+  with LBColumns do
+    if ItemIndex >= 0 then
+      result := TXStringColumnItem(items.objects[ItemIndex]).EditorInheritsCellProps;
+end;
+
+procedure TDlgProps.SetPropertyInheritance(const Value: boolean);
+begin
+  with LBColumns do
+    if ItemIndex >= 0 then
+      TXStringColumnItem(items.objects[ItemIndex]).EditorInheritsCellProps := Value;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 // EventHandler TDlgProps
 //
@@ -420,6 +442,7 @@ begin
   CBHdrColor.Selection := ColHdrColor;
   BtnFont.Font := ColFont;
   BtnHdrFont.Font := ColHdrFont;
+  cbPropertyInheritance.Checked := PropertyInheritance;
   if CellEditor = nil then
       CBEditor.ItemIndex := -1
   else
@@ -526,6 +549,11 @@ begin
     1:  HdrAlignment := taCenter;
     2:  HdrAlignment := taRightJustify;
   end;
+end;
+
+procedure TDlgProps.cbPropertyInheritanceClick(Sender: TObject);
+begin
+  PropertyInheritance := cbPropertyInheritance.Checked;
 end;
 
 end.

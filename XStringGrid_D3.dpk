@@ -30,7 +30,6 @@ package XStringGrid_D3;
 
 requires
   vcl30,
-  vcldb30,
   vclx30;
 
 contains
@@ -41,7 +40,6 @@ contains
   CEForm,
   CEFormRegister,
   CEButton,
-  colorcombo,
-  CECheckbox;
+  colorcombo;
 
 end.

@@ -11,7 +11,8 @@
   ----------------------------------------------------------------------------
     History:  13.10.97md  v1.0 Release v1.0
               12.08.99md  v2.0 Release v2.0
-              16.08.01md  v2.5 Release 2.5
+              16.08.01md  v2.5 Release v2.5
+              29.06.03md  v2.6 Release v2.6
   ----------------------------------------------------------------------------
 }
 unit Unit1;
@@ -68,6 +69,11 @@ type
     procedure CheckBoxCellEditor1SetState(Sender: TCheckBoxCellEditor);
     procedure CheckBoxCellEditor1SetText(Sender: TCheckBoxCellEditor;
       var Value: String);
+    procedure xgCellProps(Sender: TObject; Canvas: TCanvas;
+      var Alignment: TAlignment; var CellText: String;
+      AState: TGridDrawState; Row, Col: Integer);
+    procedure xgDrawEditor(Sender: TObject; ACol, ARow: Integer;
+      Editor: TCellEditor);
   private
     CurrentRow: Longint;
     CurrentCol: Longint;
@@ -267,6 +273,25 @@ begin
     Value := 'X'
   else
     Value := '';
+end;
+
+procedure TDemoForm.xgCellProps(Sender: TObject; Canvas: TCanvas;
+  var Alignment: TAlignment; var CellText: String; AState: TGridDrawState;
+  Row, Col: Integer);
+begin
+  if (col <> 3) and (col <> 4) and (row mod 2 = 1) and not(gdSelected in AState) then
+    Canvas.Brush.Color := clGray; 
+end;
+
+procedure TDemoForm.xgDrawEditor(Sender: TObject; ACol, ARow: Integer;
+  Editor: TCellEditor);
+begin
+  if (ACol <> 3) and (ACol <> 4) and (ARow mod 2 = 1) then
+    (Editor as TMetaCellEditor).Editor.Color := clGray
+  else
+    (Editor as TMetaCellEditor).Editor.Color := clWindow;
+
+  xg.Columns[xg.Col].ShowEditor(xg.Row);
 end;
 
 end.
