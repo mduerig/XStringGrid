@@ -1,10 +1,11 @@
+{$I VERSIONS.INC}
 unit Unit2;
 
 interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs, CEForm,
-  ComCtrls, StdCtrls, ToolWin, ImgList;
+  ComCtrls, StdCtrls, ToolWin{$IFDEF HAS_IMGLIST_UNIT}, ImgList{$ENDIF};
 
 type
   TCustomCellEditor = class(TFormInplace)
