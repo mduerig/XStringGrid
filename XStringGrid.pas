@@ -57,6 +57,9 @@
               30.07.03md  v2.7 Fixed bug with multiline display of editors
               18.08.03md  v2.7 New property AutoSizeDropDown for ComboCellEditor
                                Thanks to Don Donati
+              30.06.05md  v2.7 Fixed bug in MouseDown which caused exception
+                               when clicking on a blank field outside the grid.
+                               Thanks to Javor Markov
 ------------------------------------------------------------------------------
 }
 {$I VERSIONS.INC}
@@ -891,23 +894,27 @@ var
   s: TGridRect;
 begin
   MouseToCell(X, Y, c, r);
-  if (goAlwaysShowEditor in Options) and (c >= FixedCols) and (r >= FixedRows) then begin
-    if FCellEditor <> nil then
-      FCellEditor.EndEdit;
-  end;
 
-  if SelectCell(c, r) then begin
-    if FCellEditor <> nil then
-      FCellEditor.Clear;
+  if (c >= 0) and (r >= 0) then begin
+    if (goAlwaysShowEditor in Options) and (c >= FixedCols) and (r >= FixedRows) then begin
+      if FCellEditor <> nil then
+        FCellEditor.EndEdit;
+    end;
 
-    if (c >= FixedCols) and (r >= FixedRows) then begin
-      s.left := c;
-      s.Right := c;
-      s.Top := r;
-      s.Bottom := r;
-      Selection := s;
+    if SelectCell(c, r) then begin
+      if FCellEditor <> nil then
+        FCellEditor.Clear;
+
+      if (c >= FixedCols) and (r >= FixedRows) then begin
+        s.left := c;
+        s.Right := c;
+        s.Top := r;
+        s.Bottom := r;
+        Selection := s;
+      end;
     end;
   end;
+  
   inherited MouseDown(Button, Shift, X, Y);
 
   if (FCellEditor = nil) and not (goAlwaysShowEditor in Options) then
